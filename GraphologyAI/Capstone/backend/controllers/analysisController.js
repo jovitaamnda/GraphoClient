@@ -56,7 +56,7 @@ exports.generatePDF = async (req, res) => {
     }
 
     // Create PDF
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ margin: 50, size: 'A4' });
     const filename = `Analysis_Result_${analysisId}.pdf`;
 
     res.setHeader("Content-disposition", `attachment; filename="${filename}"`);
@@ -64,62 +64,162 @@ exports.generatePDF = async (req, res) => {
 
     doc.pipe(res);
 
-    // --- PDF CONTENT ---
+    // --- LOGOS ---
+    const logoLeft = path.join(__dirname, "../assets/images/grapholyze_logo.png");
+    const logoRight = path.join(__dirname, "../assets/images/trisakti_logo.png");
 
-    // Header
-    doc.fontSize(20).text("Hasil Analisis Grafologi AI", { align: "center" });
-    doc.moveDown();
-
-    // User Info
-    doc.fontSize(12).text(`Nama: ${analysis.userId.name}`);
-    doc.text(`Email: ${analysis.userId.email}`);
-    doc.text(`Tanggal: ${new Date(analysis.createdAt).toLocaleDateString()}`);
-    doc.moveDown();
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke(); // Separator line
-    doc.moveDown();
-
-    // Enneagram Type
-    doc.fontSize(16).fillColor("purple").text(`Tipe Kepribadian: ${analysis.enneagramType || 'Tidak Terdeteksi'}`, { align: "center" });
-    doc.fontSize(14).fillColor("black").text(`(${analysis.personalityType || 'Unknown'})`, { align: "center" });
-
-    // AI Confidence
-    if (analysis.aiConfidence) {
-      const confPercent = analysis.aiConfidence > 1 ? analysis.aiConfidence : (analysis.aiConfidence * 100).toFixed(0);
-      doc.fontSize(10).fillColor("grey").text(`Akurasi AI: ${confPercent}%`, { align: "center" });
+    if (fs.existsSync(logoLeft)) {
+      doc.image(logoLeft, 50, 40, { width: 150 });
     }
-    doc.moveDown();
-
-    // Description
-    doc.fontSize(12).text("Deskripsi:", { underline: true });
-    doc.moveDown(0.5);
-    doc.text(analysis.description || "Tidak ada deskripsi.", { align: "justify" });
-    doc.moveDown();
-
-    // Traits (Simple Bar Chart Visualization)
-    if (analysis.traits) {
-      doc.fontSize(12).text("Profil Kepribadian:", { underline: true });
-      doc.moveDown(0.5);
-
-      const traits = analysis.traits; // Access sub-document directly
-      const traitKeys = Object.keys(traits).filter(k => typeof traits[k] === 'number');
-
-      traitKeys.forEach(trait => {
-        const value = traits[trait];
-        const label = trait.charAt(0).toUpperCase() + trait.slice(1).replace(/([A-Z])/g, ' $1');
-
-        doc.text(`${label}: ${value}%`);
-
-        // Draw bar
-        const barWidth = (value / 100) * 300;
-        doc.rect(doc.x, doc.y, barWidth, 10).fill("purple");
-        doc.moveDown(1.5);
-        doc.fillColor("black"); // Reset color
-      });
+    if (fs.existsSync(logoRight)) {
+      doc.image(logoRight, 470, 35, { width: 80, align: 'right' });
     }
 
-    // Footer
+    // --- CENTERED HEADER ---
+    doc.moveDown(5);
+    doc.font("Helvetica").fontSize(10).text("A Research Collaboration Project", { align: "center" });
+
+    // Line below "Project"
+    const lineY = doc.y + 5;
+    doc.moveTo(100, lineY).lineTo(495, lineY).lineWidth(0.5).stroke();
+
+    // --- TITLE "LAPORAN HASIL ANALYSIS" ---
+    doc.moveDown(3);
+    doc.font("Helvetica-Bold").fontSize(12).text("LAPORAN HASIL ANALYSIS", { align: "left" });
+
     doc.moveDown(2);
-    doc.fontSize(10).text("Graphology AI - Ungkap Kepribadian dari Tulisan Tangan", { align: "center", text: "grey" });
+
+    // --- DATA UTAMA (TIPE & SCORE) ---
+    // Tipe Kepribadian
+    doc.font("Helvetica-Bold").fontSize(10).text("Tipe Kepribadian:");
+    doc.moveDown(0.3);
+    doc.font("Helvetica").fontSize(11).text(`${analysis.enneagramType || '-'} (${analysis.personalityType || '-'})`);
+
+    doc.moveDown(2);
+
+    // AI Confidence Score
+    doc.font("Helvetica-Bold").fontSize(10).text("AI Confidence Score:");
+    doc.moveDown(0.3);
+    const confPercent = analysis.aiConfidence > 1 ? analysis.aiConfidence : (analysis.aiConfidence * 100).toFixed(0);
+    doc.font("Helvetica").fontSize(11).text(`${confPercent}%`);
+
+    doc.moveDown(3);
+
+    // --- TABLE: Analisis Fitur Grafologi ---
+    // Centered Title
+    doc.font("Helvetica-Bold").fontSize(10).text("Analisis Fitur Grafologi", { align: "center" });
+    doc.moveDown(1);
+
+    // Table Config
+    const tableTop = doc.y;
+    const tableWidth = 450;
+    const tableLeft = (595 - tableWidth) / 2; // Centered table
+
+    // New Column Structure: Responbilitas | Analisis | Kepribadian
+    const colWidths = [120, 100, 230]; // Total 450
+    const col1 = tableLeft;
+    const col2 = col1 + colWidths[0];
+    const col3 = col2 + colWidths[1];
+
+    // Header Row
+    const headerHeight = 25;
+    doc.lineWidth(1);
+
+    // Outer border top
+    doc.moveTo(tableLeft, tableTop).lineTo(tableLeft + tableWidth, tableTop).stroke();
+
+    // Vertical lines for Header
+    doc.moveTo(col1, tableTop).lineTo(col1, tableTop + headerHeight).stroke();
+    doc.moveTo(col2, tableTop).lineTo(col2, tableTop + headerHeight).stroke();
+    doc.moveTo(col3, tableTop).lineTo(col3, tableTop + headerHeight).stroke();
+    doc.moveTo(col3 + colWidths[2], tableTop).lineTo(col3 + colWidths[2], tableTop + headerHeight).stroke();
+
+    // Header Text
+    doc.fontSize(9).font("Helvetica-Bold");
+    const textY = tableTop + 8;
+    doc.text("Responbilitas", col1 + 5, textY);
+    doc.text("Analisis", col2 + 5, textY);
+    doc.text("Kepribadian", col3 + 5, textY);
+
+    // Header Bottom Line
+    doc.moveTo(tableLeft, tableTop + headerHeight).lineTo(tableLeft + tableWidth, tableTop + headerHeight).stroke();
+
+    // Rows
+    let currentY = tableTop + headerHeight;
+    const traits = analysis.traits || {};
+    const traitKeys = Object.keys(traits);
+
+    // Label Map
+    const labelMap = {
+      slant: "Slant",
+      size: "Size",
+      pressure: "Pressure",
+      baseline: "Baseline"
+    };
+
+    const drawRow = (c1, c2, c3) => {
+      const rowHeight = 35; // Increased height for wrapping text in Kepribadian
+
+      // Vertical lines
+      doc.moveTo(col1, currentY).lineTo(col1, currentY + rowHeight).stroke();
+      doc.moveTo(col2, currentY).lineTo(col2, currentY + rowHeight).stroke();
+      doc.moveTo(col3, currentY).lineTo(col3, currentY + rowHeight).stroke();
+      doc.moveTo(col3 + colWidths[2], currentY).lineTo(col3 + colWidths[2], currentY + rowHeight).stroke();
+
+      // Content
+      doc.font("Helvetica").fontSize(9);
+      doc.text(c1, col1 + 5, currentY + 10, { width: colWidths[0] - 10, ellipsis: true });
+      doc.text(c2, col2 + 5, currentY + 10, { width: colWidths[1] - 10, ellipsis: true });
+      // c3 is Meaning now
+      doc.text(c3, col3 + 5, currentY + 5, { width: colWidths[2] - 10, height: rowHeight - 10, ellipsis: true });
+
+      // Bottom line
+      doc.moveTo(tableLeft, currentY + rowHeight).lineTo(tableLeft + tableWidth, currentY + rowHeight).stroke();
+
+      currentY += rowHeight;
+    };
+
+    if (traitKeys.length > 0) {
+      traitKeys.forEach(key => {
+        if (key === '$init' || typeof traits[key] !== 'object') return;
+        const t = traits[key];
+        const label = labelMap[key] || key.charAt(0).toUpperCase() + key.slice(1);
+
+        // Map meaning to 3rd column
+        drawRow(label, t.val || "-", t.meaning || "-");
+      });
+    } else {
+      // Empty rows if no data
+      drawRow("-", "-", "-");
+      drawRow("-", "-", "-");
+      drawRow("-", "-", "-");
+      drawRow("-", "-", "-");
+    }
+
+    doc.moveDown(3);
+
+    // --- REKOMENDASI ---
+    // Make sure we are below table
+    doc.y = currentY + 40;
+
+    doc.font("Helvetica-Bold").fontSize(12).text("Rekomendasi Pengembangan Diri:");
+    doc.moveDown(1);
+    doc.font("Helvetica").fontSize(10);
+
+    // Check recommendations array
+    const recs = analysis.recommendations || [];
+    if (recs.length > 0) {
+      recs.forEach((r, i) => {
+        doc.text(`${i + 1}. ${r}`);
+        doc.moveDown(0.5);
+      });
+    } else {
+      doc.text(analysis.description || "No specific recommendations.");
+    }
+
+    // --- FOOTER ---
+    const footerY = 780;
+    doc.fontSize(8).font("Helvetica").text("Generated by Grapholyze Capstone AI Engine | 2026", 50, footerY, { align: "center", width: 500 });
 
     doc.end();
 

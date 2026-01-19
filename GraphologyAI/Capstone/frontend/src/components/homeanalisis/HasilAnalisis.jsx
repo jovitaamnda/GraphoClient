@@ -22,142 +22,45 @@ export default function AnalysisResult({ analysis }) {
     enneagram: rawData.enneagramType || "Tipe Tidak Terdeteksi",
     personality: rawData.personalityType || "Unknown Type",
     description: rawData.description || "Deskripsi tidak tersedia.",
-    
+
     // Ambil Confidence (Bulatkan ke angka)
     confidence: rawData.confidence ? Math.round(rawData.confidence) : 0,
 
     // Ambil Features (Traits dari Backend)
     features: rawData.traits || rawData.graphologyAnalysis || null,
-    
+
     // Gambar
     image: rawData.imageUrl || rawData.canvasData,
 
     // Rekomendasi: Gunakan data dari Backend jika ada, jika tidak gunakan fallback
-    recommendations: (rawData.recommendations && rawData.recommendations.length > 0) 
-      ? rawData.recommendations 
-      : [ 'Template default....']
+    recommendations: (rawData.recommendations && rawData.recommendations.length > 0)
+      ? rawData.recommendations
+      : ['Template default....']
   };
 
-  // --- 2. FUNGSI DOWNLOAD PDF (CLIENT SIDE - jspdf) ---
+  // --- 2. FUNGSI DOWNLOAD PDF (BACKEND) ---
   const handleDownloadPDF = async () => {
     try {
       setIsExporting(true);
-      const { jsPDF } = await import("jspdf");
-      
-      const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
+      // Construct backend URL (Assuming standard port 5000 or from env if available in frontend config)
+      // Since specific headers/cookies are handled by browser, window.open is simplest for download
+      // We use the ID from the analysis object
+      const analysisId = rawData._id || rawData.id;
+      if (!analysisId) throw new Error("Analysis ID not found");
 
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      let yPosition = 20;
+      // Use relative path if proxy is set up or full path if separate
+      // Assuming localhost:8000 based on previous logs/env
+      const backendUrl = "http://localhost:8000";
+      const downloadUrl = `${backendUrl}/api/analysis/${analysisId}/pdf`;
 
-      // -- Header --
-      doc.setFontSize(22);
-      doc.setTextColor(88, 28, 135); // Ungu
-      doc.text("Graphology Analysis Result", pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 15;
+      // Open in new tab/window to trigger download (Browser handles cookies)
+      window.open(downloadUrl, '_blank');
 
-      // -- Main Result --
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text(`Tipe: ${displayData.enneagram} (${displayData.personality})`, 20, yPosition);
-      yPosition += 8;
-
-      doc.setFontSize(12);
-      doc.setTextColor(100, 100, 100);
-      doc.text(`AI Confidence: ${displayData.confidence}%`, 20, yPosition);
-      yPosition += 15;
-
-      // -- Description --
-      doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Interpretasi Kepribadian", 20, yPosition);
-      yPosition += 7;
-
-      doc.setFontSize(11);
-      doc.setTextColor(60, 60, 60);
-      const descLines = doc.splitTextToSize(displayData.description, pageWidth - 40);
-      doc.text(descLines, 20, yPosition);
-      yPosition += descLines.length * 5 + 10;
-
-      // -- Graphology Features (Tabel Manual) --
-      if (displayData.features) {
-        doc.setFontSize(14);
-        doc.setTextColor(0, 0, 0);
-        doc.text("Analisis Fitur Grafologi", 20, yPosition);
-        yPosition += 10;
-
-        const featuresToPrint = [
-          { label: "Slant (Kemiringan)", data: displayData.features.slant },
-          { label: "Size (Ukuran)", data: displayData.features.size },
-          { label: "Pressure (Tekanan)", data: displayData.features.pressure },
-          { label: "Baseline (Arah)", data: displayData.features.baseline },
-        ];
-
-        doc.setFontSize(10);
-        featuresToPrint.forEach((item) => {
-          if (item.data) {
-            // Label
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(88, 28, 135);
-            doc.text(item.label + ":", 20, yPosition);
-            
-            // Value
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(0, 0, 0);
-            const valueText = `${item.data.val} - ${item.data.meaning}`;
-            const valueLines = doc.splitTextToSize(valueText, pageWidth - 70);
-            doc.text(valueLines, 70, yPosition);
-            
-            yPosition += valueLines.length * 5 + 3;
-          }
-        });
-      }
-
-      // -- TAMBAHAN: REKOMENDASI DI PDF --
-      yPosition += 10;
-      // Cek apakah muat di halaman, kalau tidak addPage
-      if (yPosition > pageHeight - 50) {
-          doc.addPage();
-          yPosition = 20;
-      }
-
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 0, 0);
-      doc.text("Rekomendasi Pengembangan Diri", 20, yPosition);
-      yPosition += 8;
-
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(60, 60, 60);
-
-      displayData.recommendations.forEach((rec, index) => {
-          const prefix = `${index + 1}. `;
-          const recLines = doc.splitTextToSize(prefix + rec, pageWidth - 40);
-          doc.text(recLines, 20, yPosition);
-          yPosition += recLines.length * 5 + 2;
-      });
-
-      // -- Footer --
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        `Generated by Grapholyze on ${new Date().toLocaleDateString()}`,
-        pageWidth / 2,
-        pageHeight - 10,
-        { align: "center" }
-      );
-
-      doc.save(`Analysis_${displayData.enneagram}.pdf`);
-      setIsExporting(false);
+      setTimeout(() => setIsExporting(false), 2000);
 
     } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert("Gagal membuat PDF. Coba lagi.");
+      console.error("Error downloading PDF:", error);
+      alert("Gagal mendownload PDF. Pastikan server backend berjalan.");
       setIsExporting(false);
     }
   };
@@ -165,11 +68,11 @@ export default function AnalysisResult({ analysis }) {
   // --- 3. FUNGSI DOWNLOAD TXT ---
   const handleDownloadTxt = () => {
     const f = displayData.features || {};
-    
+
     // Format Rekomendasi untuk TXT
     const recText = displayData.recommendations
-        .map((r, i) => `${i + 1}. ${r}`)
-        .join('\n');
+      .map((r, i) => `${i + 1}. ${r}`)
+      .join('\n');
 
     const txtContent = `
 Graphology Analysis Result
@@ -258,20 +161,19 @@ GRAPHOLOGY FEATURES
                 <span className="text-sm text-indigo-200">%</span>
               </div>
             </div>
-            
+
             {/* Progress Bar Confidence */}
             <div className="w-full bg-black/20 rounded-full h-3 overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${displayData.confidence}%` }}
                 transition={{ duration: 1.5, ease: "easeOut" }}
-                className={`h-full rounded-full ${
-                  displayData.confidence > 80 ? 'bg-green-400' : 
-                  displayData.confidence > 50 ? 'bg-yellow-400' : 'bg-red-400'
-                } shadow-[0_0_10px_rgba(255,255,255,0.3)]`}
+                className={`h-full rounded-full ${displayData.confidence > 80 ? 'bg-green-400' :
+                    displayData.confidence > 50 ? 'bg-yellow-400' : 'bg-red-400'
+                  } shadow-[0_0_10px_rgba(255,255,255,0.3)]`}
               ></motion.div>
             </div>
-            
+
             <p className="text-xs text-indigo-200 mt-2 text-right italic">
               *Probabilitas output model MobileNetV2
             </p>

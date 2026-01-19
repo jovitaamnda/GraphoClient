@@ -13,15 +13,15 @@ const app = express();
 app.use(cookieParser());
 
 app.use(cors({
-  origin: ['http://localhost:3000','http://127.0.0.1:3000'],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 // ⬅️ STOP preflight di sini (PENTING)
 app.options(/(.*)/, (req, res) => {
-  res.sendStatus(200);
+    res.sendStatus(200);
 });
 
 app.use(express.json({ limit: '50mb' }));
@@ -70,4 +70,4 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
