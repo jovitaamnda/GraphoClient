@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 const menu = [
   { name: "Dashboard", href: "/admin" },
   { name: "Data User", href: "/admin/data-user" },
+  { name: "Data Analisis", href: "/admin/data-analisis" }, // New Link
   { name: "Statistik Data", href: "/admin/statistik-data" },
   { name: "Export Data", href: "/admin/export-data" },
 ];

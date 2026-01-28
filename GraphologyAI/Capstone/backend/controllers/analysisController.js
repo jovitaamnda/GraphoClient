@@ -285,7 +285,7 @@ exports.getUserHistory = async (req, res) => {
     const { userId } = req.params;
     const { page = 1, limit = 10 } = req.query;
 
-    const history = await AnalysisService.getUserAnalysisHistory(
+    const history = await analysisService.getUserAnalysisHistory(
       userId,
       parseInt(page),
       parseInt(limit)
@@ -304,7 +304,7 @@ exports.deleteAnalysis = async (req, res) => {
   try {
     const { analysisId } = req.params;
 
-    await AnalysisService.deleteAnalysis(analysisId);
+    await analysisService.deleteAnalysis(analysisId);
 
     res.status(200).json({ message: "Analysis deleted successfully" });
   } catch (error) {
@@ -319,7 +319,7 @@ exports.getAllAnalyses = async (req, res) => {
   try {
     const { page = 1, limit = 20 } = req.query;
 
-    const analyses = await AnalysisService.getAllAnalyses(
+    const analyses = await analysisService.getAllAnalyses(
       parseInt(page),
       parseInt(limit)
     );
@@ -335,7 +335,7 @@ exports.getAllAnalyses = async (req, res) => {
 // @access  Private/Admin
 exports.getStatistics = async (req, res) => {
   try {
-    const stats = await AnalysisService.getStatistics();
+    const stats = await analysisService.getStatistics();
 
     res.status(200).json(stats);
   } catch (error) {

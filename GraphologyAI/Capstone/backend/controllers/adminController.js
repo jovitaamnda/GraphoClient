@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const TestResult = require("../models/TestResult");
+const Analysis = require("../models/Analysis");
 
 // @desc    Get dashboard stats
 // @route   GET /api/admin/stats
@@ -7,16 +7,17 @@ const TestResult = require("../models/TestResult");
 const getAdminStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments({ role: "user" });
-    const totalTests = await TestResult.countDocuments();
+    const totalTests = await Analysis.countDocuments(); // Updated from TestResult
 
     // Enneagram Distribution
-    const distribution = await TestResult.aggregate([
+    const distribution = await Analysis.aggregate([
       {
         $group: {
-          _id: "$results.personalityType",
+          _id: "$enneagramType", // Updated field name
           count: { $sum: 1 },
         },
       },
+      { $sort: { count: -1 } }
     ]);
 
     // Daily Activity (Last 7 Days)
@@ -26,7 +27,7 @@ const getAdminStats = async (req, res) => {
 
     const dailyUsers = await User.aggregate([{ $match: { role: "user", createdAt: { $gte: sevenDaysAgo } } }, { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]);
 
-    const dailyTests = await TestResult.aggregate([{ $match: { createdAt: { $gte: sevenDaysAgo } } }, { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]);
+    const dailyTests = await Analysis.aggregate([{ $match: { createdAt: { $gte: sevenDaysAgo } } }, { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]);
 
     // Monthly Growth (Last 6 Months)
     const sixMonthsAgo = new Date();
@@ -35,10 +36,10 @@ const getAdminStats = async (req, res) => {
 
     const monthlyUsers = await User.aggregate([{ $match: { role: "user", createdAt: { $gte: sixMonthsAgo } } }, { $group: { _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]);
 
-    const monthlyTests = await TestResult.aggregate([{ $match: { createdAt: { $gte: sixMonthsAgo } } }, { $group: { _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]);
+    const monthlyTests = await Analysis.aggregate([{ $match: { createdAt: { $gte: sixMonthsAgo } } }, { $group: { _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]);
 
     // Get Recent Tests (Recent Analyst) with User details
-    const recentTests = await TestResult.find().sort({ createdAt: -1 }).limit(10).populate("userId", "name email");
+    const recentTests = await Analysis.find().sort({ createdAt: -1 }).limit(10).populate("userId", "name email");
 
     res.json({
       totalUsers,
@@ -49,6 +50,7 @@ const getAdminStats = async (req, res) => {
       recentTests,
     });
   } catch (error) {
+    console.error("Dashboard Stats Error:", error);
     res.status(500).json({ message: error.message });
   }
 };

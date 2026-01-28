@@ -8,10 +8,22 @@ import * as XLSX from "xlsx";
 import { useAuth } from "@/context/AuthContext";
 import { adminApi } from "@/api";
 
+// Enneagram Color Mapping
+const TYPE_COLORS = {
+  "Tipe 1": "#EF4444", // Red
+  "Tipe 2": "#8B5CF6", // Purple
+  "Tipe 3": "#F59E0B", // Amber
+  "Tipe 4": "#10B981", // Emerald
+  "Tipe 5": "#3B82F6", // Blue
+  "Tipe 6": "#4B5563", // Gray
+  "Tipe 7": "#EAB308", // Yellow
+  "Tipe 8": "#991B1B", // Dark Red
+  "Tipe 9": "#EC4899", // Pink
+};
+
 export default function AdminDashboard() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [selectedType, setSelectedType] = useState(null);
   const [stats, setStats] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -47,39 +59,35 @@ export default function AdminDashboard() {
 
   if (!user || user.role !== "admin") return null;
 
-  // Process Distribution Data
-  const personalityTypes = [
-    { type: "Optimist", color: "#FFD700", label: "Optimis" }, // type 3? Mapping needed if types are numbers
-    { type: "Introvert", color: "#8B5CF6", label: "Introvert" }, // type 2
-    { type: "Creative", color: "#3B82F6", label: "Kreatif" }, // type 5
-    { type: "Analytical", color: "#10B981", label: "Analitis" }, // type 4
-    { type: "Leader", color: "#EF4444", label: "Pemimpin" }, // type 1
-  ].map((pt, index) => {
-    // Find count from stats.distribution
-    // Assuming distribution is [{_id: 1, count: 5}, ...]
-    // We need to map real types to these labels. For now, simplistic mapping:
-    const match = stats?.distribution?.find(d => d._id === (index + 1)) || { count: 0 };
-    return { ...pt, value: match.count };
-  });
-
   const totalAnalyses = stats?.totalTests || 0;
 
-  // Pie Chart Logic
-  const totalCircle = personalityTypes.reduce((a, b) => a + b.value, 0) || 1;
+  // Pie Chart Logic (Dynamic from Backend)
+  // Backend returns: [{ _id: "Tipe 1", count: 5 }, ...]
+  const distributionData = stats?.distribution || [];
+
+  const totalCircle = distributionData.reduce((a, b) => a + b.count, 0) || 1;
   let cumulative = 0;
-  const segments = personalityTypes.map((item) => {
-    const percent = (item.value / totalCircle) * 100;
+
+  const segments = distributionData.map((item) => {
+    const percent = (item.count / totalCircle) * 100;
     const start = cumulative;
     cumulative += percent;
-    return { ...item, percent, start };
+    return {
+      type: item._id,
+      count: item.count,
+      color: TYPE_COLORS[item._id] || "#cbd5e1", // Default gray if unknown
+      percent,
+      start
+    };
   });
 
   const handleExport = () => {
     const data = (stats?.recentTests || []).map(analysis => ({
       "User": analysis.userId?.name || "Unknown",
       "Email": analysis.userId?.email || "-",
-      "Personality Type": analysis.results?.personalityType || "-",
-      "Confidence": analysis.results?.confidence || 0,
+      "Result Type": analysis.enneagramType || "-",
+      "Personality": analysis.personalityType || "-",
+      "Confidence": analysis.confidence || 0,
       "Date": new Date(analysis.createdAt).toLocaleDateString()
     }));
 
@@ -137,7 +145,18 @@ export default function AdminDashboard() {
                 <text x="100" y="110" textAnchor="middle" className="text-4xl font-bold fill-gray-800">{totalAnalyses}</text>
               </svg>
             </div>
-            <p className="mt-4 text-grap-500 font-medium">Distribution by Type</p>
+            <p className="mt-4 text-gray-500 font-medium">Distribution by Type</p>
+
+            {/* Legend */}
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {segments.map((seg, i) => (
+                <div key={i} className="flex items-center text-xs text-gray-600">
+                  <span className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: seg.color }}></span>
+                  {seg.type} ({seg.count})
+                </div>
+              ))}
+            </div>
+
           </motion.div>
         </div>
 
@@ -171,8 +190,18 @@ export default function AdminDashboard() {
                           <p className="font-semibold text-gray-900">{test.userId?.name || "Unknown User"}</p>
                           <p className="text-xs text-gray-500">{test.userId?.email}</p>
                         </td>
-                        <td className="px-8 py-5 text-gray-600">Type {test.results?.personalityType}</td>
-                        <td className="px-8 py-5 text-center">{Math.round(test.results?.confidence || 0)}%</td>
+                        <td className="px-8 py-5 text-gray-600">
+                          <span className="font-medium text-gray-900">{test.enneagramType}</span>
+                          <br />
+                          <span className="text-xs text-gray-500">{test.personalityType}</span>
+                        </td>
+                        <td className="px-8 py-5 text-center">
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${(test.confidence || 0) > 80 ? "bg-green-100 text-green-700" :
+                              (test.confidence || 0) > 50 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"
+                            }`}>
+                            {Math.round(test.confidence || 0)}%
+                          </span>
+                        </td>
                         <td className="px-8 py-5 text-center text-gray-500">
                           {new Date(test.createdAt).toLocaleDateString()}
                         </td>

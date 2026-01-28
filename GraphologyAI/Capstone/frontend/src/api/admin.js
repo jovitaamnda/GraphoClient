@@ -13,5 +13,16 @@ export const adminApi = {
 
     deleteUser: async (id) => {
         return client.delete(`/api/admin/users/${id}`);
+    },
+
+    // Analysis Management
+    getAllAnalyses: async (page = 1, limit = 20) => {
+        return client.get("/api/analysis/admin/analyses", {
+            params: { page, limit }
+        });
+    },
+
+    deleteAnalysis: async (id) => {
+        return client.delete(`/api/analysis/${id}`);
     }
 };
