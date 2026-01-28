@@ -77,8 +77,18 @@ export default function AboutPage() {
 
             <div className="grid md:grid-cols-4 sm:grid-cols-2 gap-10">
               {team.map((person, i) => (
-                <div key={i} className="flex flex-col items-center text-center">
-                  <div className="w-40 h-40 rounded-full overflow-hidden shadow-xl mb-4">
+                <div key={i} className="flex flex-col items-center text-center group perspective-1000">
+                  {/* Image 3D Pop on Click */}
+                  <motion.div
+                    className="w-40 h-40 rounded-full overflow-hidden shadow-xl mb-4 cursor-pointer relative z-10"
+                    whileTap={{
+                      scale: 1.2,
+                      rotateY: 10,
+                      zIndex: 20,
+                      boxShadow: "0px 20px 40px rgba(0,0,0,0.4)"
+                    }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
                     <img
                       src={person.img}
                       alt={person.name}
@@ -87,9 +97,22 @@ export default function AboutPage() {
                         e.currentTarget.src = "/profile.jpeg";
                       }}
                     />
-                  </div>
-                  <h4 className="text-xl font-bold">{person.name}</h4>
-                  <p className="text-indigo-600">{person.role}</p>
+                  </motion.div>
+
+                  {/* Text 3D Bold on Hover */}
+                  <motion.h4
+                    className="text-xl font-normal transition-all duration-300 relative"
+                    whileHover={{
+                      scale: 1.1,
+                      fontWeight: 900,
+                      textShadow: "2px 2px 0px #4f46e5, 4px 4px 0px rgba(0,0,0,0.2)",
+                      color: "#1e1b4b"
+                    }}
+                  >
+                    {person.name}
+                  </motion.h4>
+
+                  <p className="text-indigo-600 font-medium">{person.role}</p>
                 </div>
               ))}
             </div>

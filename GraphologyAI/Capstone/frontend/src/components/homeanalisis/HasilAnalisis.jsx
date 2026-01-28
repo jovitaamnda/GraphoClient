@@ -118,6 +118,25 @@ GRAPHOLOGY FEATURES
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
 
+      {/* ⚠️ DISCLAIMER SECTION - NEW */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="bg-yellow-50 border border-yellow-200 rounded-xl p-5 flex gap-4 items-start shadow-sm"
+      >
+        <div className="bg-yellow-100 p-2 rounded-lg text-yellow-600 shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+        </div>
+        <div>
+          <h4 className="font-bold text-yellow-800 text-lg mb-1">Penting: Disclaimer Hasil Analisis AI</h4>
+          <p className="text-yellow-700/90 text-sm leading-relaxed">
+            Analisis ini dihasilkan oleh kecerdasan buatan (AI) sebagai referensi awal untuk pengembangan diri.
+            Hasil mungkin dipengaruhi oleh kualitas foto dan gaya tulisan. Laporan ini <strong>tidak menggantikan</strong> diagnosis profesional dari psikolog.
+          </p>
+        </div>
+      </motion.div>
+
       {/* SECTION 1: Image & Confidence Result (Sama Seperti Aslinya) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Kolom Kiri: Gambar */}
@@ -169,7 +188,7 @@ GRAPHOLOGY FEATURES
                 animate={{ width: `${displayData.confidence}%` }}
                 transition={{ duration: 1.5, ease: "easeOut" }}
                 className={`h-full rounded-full ${displayData.confidence > 80 ? 'bg-green-400' :
-                    displayData.confidence > 50 ? 'bg-yellow-400' : 'bg-red-400'
+                  displayData.confidence > 50 ? 'bg-yellow-400' : 'bg-red-400'
                   } shadow-[0_0_10px_rgba(255,255,255,0.3)]`}
               ></motion.div>
             </div>
