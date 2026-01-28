@@ -1,7 +1,7 @@
 const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
-const Analysis = require("../models/Analysis"); 
+const Analysis = require("../models/Analysis");
 
 /**
  * --- KAMUS DATA ILMIAH (KNOWLEDGE BASE) ---
@@ -153,7 +153,7 @@ class AnalysisService {
     const analysis = new Analysis({
       userId,
       analysisType,
-      imageUrl: analysisType === "image" ? imageData : null, 
+      imageUrl: analysisType === "image" ? imageData : null,
       status: "pending",
     });
 
@@ -171,18 +171,18 @@ class AnalysisService {
       }
 
       // 4. Update Analysis Record
-      analysis.personalityType = knowledge.name;  
-      analysis.enneagramType = aiResult.enneagramType; 
+      analysis.personalityType = knowledge.name;
+      analysis.enneagramType = aiResult.enneagramType;
       analysis.description = knowledge.desc;
-      
+
       // ✅ Simpan Traits
-      analysis.traits = knowledge.features; 
-      
+      analysis.traits = knowledge.features;
+
       // ✅ UPDATE BARU: Simpan Rekomendasi sesuai Tipe
-      analysis.recommendations = knowledge.recommendations; 
-      
-      analysis.confidence = aiResult.confidence; 
-      
+      analysis.recommendations = knowledge.recommendations;
+
+      analysis.confidence = aiResult.confidence;
+
       analysis.status = "completed";
       await analysis.save();
 
@@ -192,85 +192,64 @@ class AnalysisService {
     } catch (aiError) {
       console.error(`[Service Error] AI Gagal: ${aiError.message}`);
 
-      // --- FALLBACK MOCK DATA ---
-      const mockResult = this.getMockAnalysisResult();
-      
-      analysis.personalityType = mockResult.personalityType;
-      analysis.enneagramType = mockResult.enneagramType + " (Fallback)";
-      analysis.description = mockResult.description;
-      analysis.traits = mockResult.traits;
-      
-      // Fallback Recommendations
-      analysis.recommendations = [
-        "Manfaatkan kekuatan unik tipe kepribadian Anda.",
-        "Perhatikan area pengembangan diri yang disarankan.",
-        "Jaga keseimbangan emosi dan logika."
-      ]; 
-      
-      analysis.confidence = 75; 
-      analysis.status = "completed"; 
+      // --- NO MOCK DATA FALLBACK ---
+      // Update status to failed and save error message
+      analysis.status = "failed";
       analysis.errorMessage = `AI Error: ${aiError.message}`;
-      
+
       await analysis.save();
-      return analysis;
+
+      // Throw error back to controller to send error response
+      throw new Error(`AI Service Failed: ${aiError.message}`);
     }
   }
 
   // ... (Sisa kode ke bawah sama persis dengan aslinya: callFlaskAI, getMockAnalysisResult, CRUD Helpers)
   // Pastikan metode statis lain (callFlaskAI, dll) tetap ada di sini sesuai kode aslimu.
-  
+
   static async callFlaskAI(imageData, analysisType) {
-     // (Gunakan kode asli Anda disini)
-     const aiUrl = process.env.FLASK_AI_URL;
-     if (!aiUrl) throw new Error("FLASK_AI_URL belum disetting di .env");
- 
-     try {
-       const form = new FormData();
-       const isBase64 = typeof imageData === 'string' && imageData.startsWith('data:image');
- 
-       if (isBase64) {
-         const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
-         const buffer = Buffer.from(base64Data, 'base64');
-         form.append('file', buffer, { filename: 'canvas.png' });
-       } else {
-         if (!fs.existsSync(imageData)) throw new Error("File gambar tidak ditemukan");
-         form.append('file', fs.createReadStream(imageData));
-       }
- 
-       const response = await axios.post(aiUrl, form, {
-         headers: { ...form.getHeaders() },
-         timeout: 45000 
-       });
- 
-       const aiData = response.data;
-       const rawPrediction = aiData.prediction || "Tipe 1";
-       const cleanType = rawPrediction.split('(')[0].trim(); 
-       
-       let rawConf = aiData.confidence || 0;
-       if (typeof rawConf === 'string') {
-         rawConf = parseFloat(rawConf.replace('%', ''));
-       }
- 
-       return {
-         enneagramType: cleanType,
-         confidence: rawConf
-       };
- 
-     } catch (error) {
-        throw new Error(error.message);
-     }
+    // (Gunakan kode asli Anda disini)
+    const aiUrl = process.env.FLASK_AI_URL;
+    if (!aiUrl) throw new Error("FLASK_AI_URL belum disetting di .env");
+
+    try {
+      const form = new FormData();
+      const isBase64 = typeof imageData === 'string' && imageData.startsWith('data:image');
+
+      if (isBase64) {
+        const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+        form.append('file', buffer, { filename: 'canvas.png' });
+      } else {
+        if (!fs.existsSync(imageData)) throw new Error("File gambar tidak ditemukan");
+        form.append('file', fs.createReadStream(imageData));
+      }
+
+      const response = await axios.post(aiUrl, form, {
+        headers: { ...form.getHeaders() },
+        timeout: 45000
+      });
+
+      const aiData = response.data;
+      const rawPrediction = aiData.prediction || "Tipe 1";
+      const cleanType = rawPrediction.split('(')[0].trim();
+
+      let rawConf = aiData.confidence || 0;
+      if (typeof rawConf === 'string') {
+        rawConf = parseFloat(rawConf.replace('%', ''));
+      }
+
+      return {
+        enneagramType: cleanType,
+        confidence: rawConf
+      };
+
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 
-  static getMockAnalysisResult() {
-    const mockType = 'Tipe 1';
-    const kb = ENNEAGRAM_KNOWLEDGE_BASE[mockType];
-    return {
-      enneagramType: mockType,
-      personalityType: kb.name,
-      description: kb.desc,
-      traits: kb.features
-    };
-  }
+
 
   // ... CRUD Lainnya tetap sama
   static async getUserAnalysisHistory(userId, page = 1, limit = 10) {

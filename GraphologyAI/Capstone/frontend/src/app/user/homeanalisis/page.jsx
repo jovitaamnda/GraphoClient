@@ -10,6 +10,7 @@ import LoadingModal from "@/components/modals/LoadingModal";
 import { Upload, Sparkles, Check } from "lucide-react";
 import { Lightbulb, Sun, Ruler, Smartphone, Camera, Pencil } from "lucide-react";
 import { analysisApi } from "@/api";
+import Swal from 'sweetalert2';
 
 export default function HomeAnalisis() {
   const router = useRouter();
@@ -35,8 +36,25 @@ export default function HomeAnalisis() {
       setAnalysisResult(data.analysis);
       setStep("hasil");
     } catch (err) {
-      console.error("Analysis Error:", err);
-      setError(err.message);
+      // Custom error message for AI connection issues
+      let displayMessage = err.message;
+
+      if (
+        err.message.toLowerCase().includes("ai service failed") ||
+        err.message.toLowerCase().includes("connect") ||
+        err.message.toLowerCase().includes("timeout")
+      ) {
+        displayMessage = "Layanan AI tidak terhubung dan terputus.";
+      }
+
+      // Show error popup instead of console error
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Terhubung',
+        text: displayMessage,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Tutup'
+      });
 
       // Check if it's an authentication error
       if (err.message.includes("authorized") || err.message.includes("token")) {
