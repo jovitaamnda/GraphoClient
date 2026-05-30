@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [imgSrc, setImgSrc] = useState("/profile.jpeg");
   const [isClient, setIsClient] = useState(false);
@@ -52,56 +50,59 @@ export default function Navbar() {
     if (page === "home") {
       router.push("/");
     } else if (page === "handwriting") {
-      router.push("/user/homeanalisis");
-    } else if (page === "about") {
-      router.push("/about");
+      router.push("/user/analysis");
+    } else if (page === "learn") {
+      router.push("/learn-more");
     } else if (page === "login") {
       router.push("/auth/login");
     }
-    setMobileOpen(false);
   };
 
   // Hide Navbar on Admin pages (admin has its own navbar)
   if (pathname.startsWith("/admin")) return null;
 
+  const navItems = [
+    { label: "Beranda", page: "home" },
+    { label: "Analisis Tulis Tangan", page: "handwriting" },
+    { label: "Pelajari Lebih Lanjut", page: "learn" },
+  ];
+
   return (
-    <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-md transition-all duration-300" suppressHydrationWarning>
-      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center" suppressHydrationWarning>
+    <nav className="fixed top-0 w-full z-50 bg-[#FFF8F4]/95 backdrop-blur-md border-b border-[#DBC9C4]/40 transition-all duration-300" suppressHydrationWarning>
+      <div className="max-w-full mx-auto px-8 py-6 flex items-center justify-between" suppressHydrationWarning>
         <div onClick={() => handleScrollOrNavigate("home")} className="cursor-pointer hover:opacity-80 transition-opacity">
-          <Image
-            src="/grapholyze_logo.png"
-            alt="Grapholyze Capstone Logo"
-            width={240}
-            height={60}
-            className="w-auto h-14 object-contain"
-            priority
-          />
+          <span className="text-2xl font-semibold tracking-[0.12em] text-[#854C4A]">Grafologi</span>
         </div>
 
         {/* Desktop */}
-        <div className="hidden md:flex items-center gap-8">
-          <button onClick={() => handleScrollOrNavigate("home")} className="text-gray-700 font-medium hover:text-[#1e3a8a] transition-colors relative group">
-            Home
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#1e3a8a] transition-all group-hover:w-full"></span>
-          </button>
-          <button onClick={() => handleScrollOrNavigate("handwriting")} className="text-gray-700 font-medium hover:text-[#1e3a8a] transition-colors relative group">
-            Handwriting Analyst
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#1e3a8a] transition-all group-hover:w-full"></span>
-          </button>
-          <button onClick={() => router.push("/learn-more")} className="text-gray-700 font-medium hover:text-[#1e3a8a] transition-colors relative group">
-            Learn More
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#1e3a8a] transition-all group-hover:w-full"></span>
-          </button>
+        <div className="hidden md:flex items-center gap-12">
+          {navItems.map((item) => {
+            const active = (item.page === "home" && pathname === "/") ||
+              (item.page === "handwriting" && pathname === "/user/homeanalisis") ||
+              (item.page === "learn" && pathname === "/learn-more");
+
+            return (
+              <button
+                key={item.page}
+                onClick={() => handleScrollOrNavigate(item.page)}
+                className={`relative text-base font-semibold transition-colors ${active ? "text-[#854C4A]" : "text-[#524342] hover:text-[#854C4A]"}`}
+              >
+                {item.label}
+                {active && <span className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-[#854C4A]" />}
+              </button>
+            );
+          })}
 
           {isClient && (
             !user ? (
-              <button onClick={() => router.push("/auth/login")} className="bg-[#1e3a8a] text-white px-6 py-2.5 rounded-full font-medium hover:bg-blue-900 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                Login/Register
+              <button onClick={() => router.push("/auth/login")} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#DBC9C4] bg-white text-[#854C4A] shadow-sm transition hover:bg-[#FFF1EB] hover:text-[#524342]">
+                <span className="text-lg">👤</span>
               </button>
             ) : (
               <div ref={profileRef} className="relative">
-                <button onClick={() => setProfileOpen((v) => !v)} className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 hover:border-[#1e3a8a] transition-colors">
-                  <img src={imgSrc} alt="avatar" className="w-full h-full object-cover" />
+                <button onClick={() => setProfileOpen((v) => !v)} className="flex items-center gap-3 bg-[#854C4A] text-white px-4 py-2 rounded-full font-medium shadow-lg hover:bg-[#C17F7C] transition-all">
+                  <span>Akun</span>
+                  <img src={imgSrc} alt="avatar" className="w-8 h-8 rounded-full object-cover border-2 border-white" />
                 </button>
 
                 {profileOpen && (

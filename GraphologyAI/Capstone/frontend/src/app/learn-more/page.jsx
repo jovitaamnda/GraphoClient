@@ -212,7 +212,7 @@ export default function LearnMore() {
             <h3 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 mb-6">
               Pahami dirimu lebih dalam melalui tulisan tangan.
             </h3>
-            <Link href="/homeanalisis">
+            <Link href="/user/analysis">
               <button className="bg-[#1e3a8a] text-white px-10 py-4 rounded-full font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300">
                 Mulai Analisis Sekarang
               </button>

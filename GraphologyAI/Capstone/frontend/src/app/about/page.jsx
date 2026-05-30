@@ -142,7 +142,7 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white py-24 text-center">
         <h2 className="text-4xl font-bold mb-6">Mulai Analisis Sekarang</h2>
-        <button onClick={() => router.push("/user/homeanalisis")} className="bg-yellow-400 text-gray-900 font-bold px-10 py-4 rounded-full">
+        <button onClick={() => router.push("/user/analysis")} className="bg-yellow-400 text-gray-900 font-bold px-10 py-4 rounded-full">
           Mulai
         </button>
       </section>

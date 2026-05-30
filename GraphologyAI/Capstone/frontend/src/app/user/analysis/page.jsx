@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import UploadFoto from "@/components/homeanalisis/UploadFoto";
-import HandwritingCanvas from "@/components/homeanalisis/HandwritingCanvas";
-import HasilAnalisis from "@/components/homeanalisis/HasilAnalisis";
+import UploadFoto from "@/components/analysis/UploadFoto";
+import HandwritingCanvas from "@/components/analysis/HandwritingCanvas";
+import HasilAnalisis from "@/components/analysis/HasilAnalisis";
 import LoginRequiredModal from "@/components/modals/LoginRequiredModal";
 import LoadingModal from "@/components/modals/LoadingModal";
 import { Upload, Sparkles, Check } from "lucide-react";

@@ -11,13 +11,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const token = Cookies.get("token");
-    if (!token) return router.push("/login");
+    if (!token) return router.push("/auth/login");
 
     // Bisa fetch data user juga dari backend
     client
       .get("/api/auth/me") // Client handles URL and Auth Header automatically
       .then((res) => setUser(res)) // Interceptor returns res.data directly
-      .catch(() => router.push("/login"));
+      .catch(() => router.push("/auth/login"));
   }, []);
 
   return (
