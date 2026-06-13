@@ -312,6 +312,30 @@ exports.deleteAnalysis = async (req, res) => {
   }
 };
 
+// @route   PUT /api/analysis/:analysisId
+// @desc    Update user's analysis (admin only)
+// @access  Private/Admin
+exports.updateAnalysis = async (req, res) => {
+  try {
+    const { analysisId } = req.params;
+    const { enneagramType, confidence, personalityType } = req.body;
+
+    const updated = await analysisService.updateAnalysis(analysisId, {
+      enneagramType,
+      confidence,
+      personalityType
+    });
+
+    if (!updated) {
+      return res.status(404).json({ message: "Analysis not found" });
+    }
+
+    res.status(200).json({ message: "Analysis updated successfully", analysis: updated });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @route   GET /api/admin/analyses
 // @desc    Get all analyses (admin only)
 // @access  Private/Admin

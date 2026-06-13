@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle, Calendar } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { authApi } from "@/api";
 
@@ -104,7 +104,8 @@ export default function RegisterForm() {
       }
 
       setLoading(false);
-      router.push("/");
+      // Diarahkan ke dashboard user
+      router.push("/user/dashboard");
     } catch (err) {
       console.error("Register error:", err);
       setError(err.response?.data?.message || "Terjadi kesalahan. Silakan coba lagi.");
@@ -113,10 +114,10 @@ export default function RegisterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" aria-live="polite">
+    <form onSubmit={handleSubmit} className="space-y-5" aria-live="polite">
       {/* Error Message */}
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-red-100/20 border border-red-300 rounded-2xl text-red-400">
+        <div className="flex items-center gap-3 p-4 bg-[#FDF2F2] border border-[#F5C5C5] rounded-2xl text-[#C81E1E]">
           <AlertCircle size={20} className="flex-shrink-0" />
           <span className="text-sm font-medium">{error}</span>
         </div>
@@ -124,37 +125,62 @@ export default function RegisterForm() {
 
       {/* Nama */}
       <div className="text-left">
-        <label className="block text-gray-700 font-medium mb-2">Nama Lengkap</label>
+        <label className="block text-[#6E5B42] text-sm font-medium mb-2">Nama Lengkap</label>
         <div className="relative">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <Input type="text" placeholder="Nama lengkap" value={name} onChange={(e) => setName(e.target.value)} className="pl-10 py-6 text-base" required />
+          <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C17F7C]" size={20} />
+          <Input
+            type="text"
+            placeholder="Nama lengkap"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="pl-12 pr-4 py-6 text-base bg-[#FFFBF8]/70 border-[#DBC9C4] focus:border-[#854C4A] focus:ring-1 focus:ring-[#854C4A] rounded-2xl transition-all"
+            required
+          />
         </div>
       </div>
 
       {/* Email */}
       <div className="text-left">
-        <label className="block text-gray-700 font-medium mb-2">Email</label>
+        <label className="block text-[#6E5B42] text-sm font-medium mb-2">Email</label>
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <Input type="email" placeholder="nama@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 py-6 text-base" required />
+          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C17F7C]" size={20} />
+          <Input
+            type="email"
+            placeholder="nama@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="pl-12 pr-4 py-6 text-base bg-[#FFFBF8]/70 border-[#DBC9C4] focus:border-[#854C4A] focus:ring-1 focus:ring-[#854C4A] rounded-2xl transition-all"
+            required
+          />
         </div>
       </div>
 
       {/* Age & Gender Row */}
       <div className="grid grid-cols-2 gap-4">
         <div className="text-left">
-          <label className="block text-gray-700 font-medium mb-2">Umur</label>
-          <Input type="number" placeholder="Contoh: 25" value={age} onChange={(e) => setAge(e.target.value)} className="py-6 text-base" min="12" required />
+          <label className="block text-[#6E5B42] text-sm font-medium mb-2">Umur</label>
+          <div className="relative">
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C17F7C]" size={20} />
+            <Input
+              type="number"
+              placeholder="Contoh: 25"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              className="pl-12 pr-4 py-6 text-base bg-[#FFFBF8]/70 border-[#DBC9C4] focus:border-[#854C4A] focus:ring-1 focus:ring-[#854C4A] rounded-2xl transition-all"
+              min="12"
+              required
+            />
+          </div>
         </div>
         <div className="text-left">
-          <label className="block text-gray-700 font-medium mb-2">Gender</label>
+          <label className="block text-[#6E5B42] text-sm font-medium mb-2">Jenis Kelamin</label>
           <select
             value={gender}
             onChange={(e) => setGender(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 h-[50px] bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-[#DBC9C4] rounded-2xl px-4 h-[54px] bg-[#FFFBF8]/70 text-[#221A13] focus:outline-none focus:ring-1 focus:ring-[#854C4A] focus:border-[#854C4A] transition-all text-base"
             required
           >
-            <option value="" disabled>Pilih...</option>
+            <option value="" disabled className="text-gray-400">Pilih...</option>
             <option value="Laki-laki">Laki-laki</option>
             <option value="Perempuan">Perempuan</option>
           </select>
@@ -163,11 +189,22 @@ export default function RegisterForm() {
 
       {/* Password */}
       <div className="text-left">
-        <label className="block text-gray-700 font-medium mb-2">Password</label>
+        <label className="block text-[#6E5B42] text-sm font-medium mb-2">Password</label>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <Input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-10 py-6 text-base" required />
-          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C17F7C]" size={20} />
+          <Input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="pl-12 pr-12 py-6 text-base bg-[#FFFBF8]/70 border-[#DBC9C4] focus:border-[#854C4A] focus:ring-1 focus:ring-[#854C4A] rounded-2xl transition-all"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#C17F7C] hover:text-[#854C4A] transition-colors"
+          >
             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
@@ -175,18 +212,36 @@ export default function RegisterForm() {
 
       {/* Konfirmasi Password */}
       <div className="text-left">
-        <label className="block text-gray-700 font-medium mb-2">Konfirmasi Password</label>
+        <label className="block text-[#6E5B42] text-sm font-medium mb-2">Konfirmasi Password</label>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <Input type={showConfirmPassword ? "text" : "password"} placeholder="Konfirmasi password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10 pr-10 py-6 text-base" required />
-          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C17F7C]" size={20} />
+          <Input
+            type={showConfirmPassword ? "text" : "password"}
+            placeholder="Konfirmasi password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="pl-12 pr-12 py-6 text-base bg-[#FFFBF8]/70 border-[#DBC9C4] focus:border-[#854C4A] focus:ring-1 focus:ring-[#854C4A] rounded-2xl transition-all"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#C17F7C] hover:text-[#854C4A] transition-colors"
+          >
             {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
       </div>
 
-      <Button type="submit" disabled={loading} className={`w-full bg-[#7B61FF] hover:bg-[#6B51EF] text-white py-6 text-base font-semibold rounded-lg ${loading ? "opacity-80 pointer-events-none" : ""}`}>
-        {loading ? "Mendaftar..." : "Daftar"}
+      {/* Submit Button */}
+      <Button
+        type="submit"
+        disabled={loading}
+        className={`w-full bg-[#854C4A] hover:bg-[#6B3A38] text-white py-6 text-base font-semibold rounded-2xl shadow-lg transition-all ${
+          loading ? "opacity-80 pointer-events-none" : ""
+        }`}
+      >
+        {loading ? "Mendaftar..." : "Daftar Sekarang"}
       </Button>
     </form>
   );

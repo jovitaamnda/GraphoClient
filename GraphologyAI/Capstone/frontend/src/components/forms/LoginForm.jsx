@@ -18,48 +18,25 @@ export default function LoginForm() {
   const [error, setError] = useState("");
 
   const validateForm = () => {
-    if (!email.trim()) {
-      setError("Email tidak boleh kosong");
-      return false;
-    }
-    if (!email.includes("@")) {
-      setError("Format email tidak valid");
-      return false;
-    }
-    if (!password) {
-      setError("Password tidak boleh kosong");
-      return false;
-    }
-    if (password.length < 6) {
-      setError("Password minimal 6 karakter");
-      return false;
-    }
+    if (!email.trim()) { setError("Email tidak boleh kosong"); return false; }
+    if (!email.includes("@")) { setError("Format email tidak valid"); return false; }
+    if (!password) { setError("Password tidak boleh kosong"); return false; }
+    if (password.length < 6) { setError("Password minimal 6 karakter"); return false; }
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
     if (!validateForm()) return;
-
     setLoading(true);
 
     try {
-      // 1. Call backend API untuk login
-      // Backend akan men-set HttpOnly Cookie secara otomatis
       const loginResponse = await authApi.login(email, password);
 
-      console.log("LOGIN RAW RESPONSE:", loginResponse); 
-
-      // ✅ PERBAIKAN DI SINI: Cek 'success', bukan 'token'
       if (loginResponse.success) {
-        
-        // 2. Fetch User Profile lengkap
-        // (Browser otomatis mengirim cookie token yang baru didapat)
         try {
           const userProfile = await authApi.getProfile();
-          console.log("FULL USER PROFILE FETCHED:", userProfile);
 
           const userDataToSave = {
             id: userProfile._id || userProfile.id,
@@ -69,101 +46,106 @@ export default function LoginForm() {
             photo: userProfile.photo,
           };
 
-          // 3. Simpan Data User ke Context & LocalStorage (Tanpa Token)
-          // Kita tidak perlu menyimpan token string lagi
-          login(userDataToSave); 
+          login(userDataToSave);
           localStorage.setItem("userData", JSON.stringify(userDataToSave));
 
-          // 4. Redirect
-          console.log("Redirecting based on role:", userProfile.role);
-          
-          if (userProfile.role === 'admin') {
-            // Set flag client-side untuk middleware (opsional, tergantung logic middleware kamu)
+          if (userProfile.role === "admin") {
             document.cookie = "admin_access=true; path=/";
             router.push("/admin");
           } else {
-            router.push("/");
+            router.push("/user/dashboard");
           }
-
         } catch (profileError) {
-          console.error("Failed to fetch profile:", profileError);
-          // Jika gagal ambil profil, anggap login gagal
           throw new Error("Gagal mengambil data profil user.");
         }
-
       } else {
-        // Jika success: false
         throw new Error(loginResponse.message || "Login gagal.");
       }
-
     } catch (err) {
-      console.warn("Login attempt failed:", err);
-      setError(`Terjadi kesalahan: ${err.message || 'Silakan coba lagi.'}`);
+      setError(err.message || "Terjadi kesalahan. Silakan coba lagi.");
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Error Message */}
+      {/* Error */}
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-red-100/20 border border-red-300 rounded-2xl text-red-400">
-          <AlertCircle size={20} className="flex-shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-4 bg-[#FDF2F2] border border-[#F5C5C5] rounded-2xl text-[#C81E1E]">
+          <AlertCircle size={20} className="shrink-0" />
           <span className="text-sm font-medium">{error}</span>
         </div>
       )}
 
       {/* Email */}
-      <div className="relative">
-        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-300" />
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          type="email"
-          placeholder="example@gmail.com"
-          autoComplete="email"
-          className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-purple-300 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
-        />
+      <div className="space-y-2 text-left">
+        <label className="block text-sm font-semibold text-[#6E5B42] ml-1">Email</label>
+        <div className="relative group">
+          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#C17F7C] group-focus-within:text-[#854C4A] transition-colors" />
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            placeholder="nama@email.com"
+            autoComplete="email"
+            className="w-full pl-12 pr-4 py-4 bg-[#FFFDFB] border border-[#DBC9C4] rounded-2xl text-[#221A13] placeholder-[#B8A89E] text-base focus:outline-none focus:ring-2 focus:ring-[#854C4A]/20 focus:border-[#854C4A] shadow-sm transition-all duration-300"
+          />
+        </div>
       </div>
 
       {/* Password */}
-      <div className="relative">
-        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-300" />
-        <input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          type={showPassword ? "text" : "password"}
-          placeholder="Password"
-          autoComplete="current-password"
-          className="w-full pl-12 pr-12 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-purple-300 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
-        />
-        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white transition">
-          {showPassword ? <EyeOff /> : <Eye />}
-        </button>
+      <div className="space-y-2 text-left">
+        <label className="block text-sm font-semibold text-[#6E5B42] ml-1">Password</label>
+        <div className="relative group">
+          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#C17F7C] group-focus-within:text-[#854C4A] transition-colors" />
+          <input
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type={showPassword ? "text" : "password"}
+            placeholder="Minimal 6 karakter"
+            autoComplete="current-password"
+            className="w-full pl-12 pr-12 py-4 bg-[#FFFDFB] border border-[#DBC9C4] rounded-2xl text-[#221A13] placeholder-[#B8A89E] text-base focus:outline-none focus:ring-2 focus:ring-[#854C4A]/20 focus:border-[#854C4A] shadow-sm transition-all duration-300"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#B8A89E] hover:text-[#854C4A] transition-colors p-1 rounded-full"
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
       </div>
 
-      {/* Ingat Saya */}
-      <div className="flex items-center justify-between text-sm">
-        <label className="flex items-center gap-2 text-purple-200 cursor-pointer">
-          <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="accent-purple-500 w-4 h-4 rounded" />
+      {/* Remember & Forgot */}
+      <div className="flex items-center justify-between text-base">
+        <label className="flex items-center gap-2.5 text-[#6E5B42] cursor-pointer select-none font-medium">
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="w-5 h-5 rounded border-[#DBC9C4] text-[#854C4A] cursor-pointer accent-[#854C4A]"
+          />
           Ingat saya
         </label>
-
-        <a href="/forgot-password" className="text-purple-300 hover:text-white transition">
+        <a
+          href="/forgot-password"
+          className="text-[#854C4A] hover:text-[#C17F7C] transition-colors font-semibold relative inline-block group"
+        >
           Lupa password?
+          <span className="absolute bottom-0 left-0 w-full h-[1.2px] bg-[#854C4A] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
         </a>
       </div>
 
-      {/* Submit Button */}
+      {/* Submit */}
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-purple-400 disabled:to-pink-400 text-white font-semibold rounded-2xl transition-all duration-300 flex items-center justify-center gap-2"
+        className="w-full py-4.5 bg-[#854C4A] hover:bg-[#6B3A38] disabled:bg-[#C17F7C] text-white font-semibold text-lg rounded-2xl transition-all duration-300 flex items-center justify-center gap-2.5 shadow-lg shadow-[#854C4A]/25 active:scale-[0.98] mt-2"
       >
         {loading ? (
           <>
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
             Memproses...
           </>
         ) : (

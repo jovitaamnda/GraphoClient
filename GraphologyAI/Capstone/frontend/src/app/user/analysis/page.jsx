@@ -7,25 +7,17 @@ import HandwritingCanvas from "@/components/analysis/HandwritingCanvas";
 import HasilAnalisis from "@/components/analysis/HasilAnalisis";
 import LoginRequiredModal from "@/components/modals/LoginRequiredModal";
 import LoadingModal from "@/components/modals/LoadingModal";
-import { Upload, Sparkles, Check } from "lucide-react";
-import { Lightbulb, Sun, Ruler, Smartphone, Camera, Pencil } from "lucide-react";
 import { analysisApi } from "@/api";
 import Swal from 'sweetalert2';
 
 export default function HomeAnalisis() {
   const router = useRouter();
   const [step, setStep] = useState("upload");
+  const [inputMode, setInputMode] = useState("upload"); // "upload" atau "canvas"
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
-
-  const steps = [
-    { id: "upload", name: "Upload Tulisan", icon: Upload },
-    { id: "hasil", name: "Hasil Analisis", icon: Sparkles },
-  ];
-
-  const currentStepIndex = steps.findIndex((s) => s.id === step);
 
   const handleUploadComplete = async (imageData) => {
     setIsLoading(true);
@@ -66,213 +58,160 @@ export default function HomeAnalisis() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-800">
-      {/* Hero Header */}
-      <section className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white py-20 px-6 text-center shadow-lg pt-32">
-        <h1 className="text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-pink-300">Analisis Tulisan Tangan AI</h1>
-        <p className="text-xl max-w-3xl mx-auto opacity-90">Ungkap karakteristik kepribadian Anda melalui tulisan tangan dengan teknologi AI yang canggih untuk insight mendalam.</p>
-      </section>
+    <div className="min-h-screen bg-[#FFF8F4] text-[#221A13] pt-28 pb-16">
+      <div className="mx-auto max-w-full w-full px-8">
+        <div className="space-y-12">
+          
+          {/* ── Heading ── */}
+          <div className="max-w-4xl mx-auto text-center space-y-4">
+            <h1 className="text-5xl font-bold tracking-tight text-[#221A13]">
+              Analisis Tulisan Tangan
+            </h1>
+            <p className="text-lg text-[#221A13]/80 leading-relaxed max-w-2xl mx-auto font-medium">
+              Temukan pola karakter dan kepribadianmu melalui tulisan tangan alami yang kamu buat sehari-hari.
+              Unggah sampel tulisan tangan untuk memulai analisis grafologi pertamamu.
+            </p>
+          </div>
 
-      {/* Progress Stepper */}
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-12">
-          {steps.map((s, index) => {
-            const Icon = s.icon;
-            const isCompleted = index < currentStepIndex;
-            const isActive = index === currentStepIndex;
-
-            return (
-              <div key={s.id} className="flex items-center flex-1">
-                <div className="relative flex flex-col items-center">
-                  <div
-                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 ${isCompleted ? "bg-green-500 text-white" : isActive ? "bg-indigo-600 text-white shadow-lg scale-110" : "bg-gray-300 text-gray-600"
-                      }`}
+          {step === "upload" ? (
+            <div className="grid gap-8 xl:grid-cols-[1.55fr_0.95fr]">
+              
+              {/* ── Kotak Input Utama (Sisi Kiri) ── */}
+              <div className="rounded-[2rem] border border-[#DBC9C4] bg-white shadow-sm overflow-hidden flex flex-col">
+                {/* Tabs Selector */}
+                <div className="flex border-b border-[#DBC9C4]/40 bg-[#854C4A]/5">
+                  <button
+                    onClick={() => setInputMode("upload")}
+                    className={`flex-1 py-4 text-base font-bold border-b transition-all ${
+                      inputMode === "upload"
+                        ? "border-b-2 border-[#854C4A] text-[#854C4A] bg-white"
+                        : "border-transparent text-[#6E5B42] hover:text-[#854C4A]"
+                    }`}
                   >
-                    {isCompleted ? <Check className="w-8 h-8" /> : <Icon className="w-8 h-8" />}
-                  </div>
-                  <p className={`mt-3 text-sm font-medium transition-colors ${isActive ? "text-indigo-600" : "text-gray-500"}`}>{s.name}</p>
+                    Unggah Foto
+                  </button>
+                  <button
+                    onClick={() => setInputMode("canvas")}
+                    className={`flex-1 py-4 text-base font-bold border-b transition-all ${
+                      inputMode === "canvas"
+                        ? "border-b-2 border-[#854C4A] text-[#854C4A] bg-white"
+                        : "border-transparent text-[#6E5B42] hover:text-[#854C4A]"
+                    }`}
+                  >
+                    Tulis di Layar
+                  </button>
                 </div>
-                {index < steps.length - 1 && <div className={`flex-1 h-1 mx-4 transition-all duration-700 ${isCompleted ? "bg-green-500" : "bg-gray-300"}`} />}
-              </div>
-            );
-          })}
-        </div>
 
-        {/* Main Content Card - lebih lebar */}
-        <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-10 md:p-20 transition-all duration-700 max-w-7xl mx-auto">
-          {step === "upload" && (
-            <div className="animate-fadeIn">
-              <h2 className="text-3xl font-bold text-center mb-16 text-indigo-700">Pilih Cara Input Tulisan Tangan</h2>
-
-              {/* Grid dengan kotak lebih lebar */}
-              <div className="grid md:grid-cols-2 gap-16 mb-20">
-                <div className="w-full">
-                  <UploadFoto onUploadComplete={handleUploadComplete} />
-                </div>
-                <div className="w-full">
-                  <HandwritingCanvas onUploadComplete={handleUploadComplete} />
+                {/* Tab Content */}
+                <div className="p-6 flex-1 flex flex-col">
+                  {inputMode === "upload" ? (
+                    <UploadFoto onUploadComplete={handleUploadComplete} />
+                  ) : (
+                    <HandwritingCanvas onUploadComplete={handleUploadComplete} />
+                  )}
                 </div>
               </div>
 
-              {/* Tips Foto Tulisan Tangan */}
-              <div className="mt-20 pt-10 border-t-2 border-indigo-200">
-                <div className="flex items-center justify-center gap-3 mb-10">
-                  <Lightbulb className="w-9 h-9 text-yellow-500" />
-                  <h3 className="text-3xl font-bold text-indigo-700">Tips Foto Tulisan Tangan Terbaik untuk Analisis Akurat</h3>
+              {/* ── Sisi Kanan: Panduan & Status ── */}
+              <div className="flex flex-col gap-6">
+                
+                {/* Panduan Penulisan */}
+                <div className="rounded-[2rem] border border-[#DBC9C4] bg-[#F5EDE8] p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="text-2xl">📌</span>
+                    <h3 className="text-2xl font-bold text-[#854C4A] tracking-wide">
+                      Panduan Penulisan
+                    </h3>
+                  </div>
+                  <ul className="space-y-5 text-[#221A13] leading-relaxed">
+                    <li className="flex gap-4">
+                      <span className="font-mono text-[#854C4A] font-bold text-lg shrink-0">01</span>
+                      <span className="text-base font-semibold text-[#221A13]">Gunakan kertas putih tanpa garis agar analisis kemiringan tulisan lebih akurat.</span>
+                    </li>
+                    <li className="flex gap-4">
+                      <span className="font-mono text-[#854C4A] font-bold text-lg shrink-0">02</span>
+                      <span className="text-base font-semibold text-[#221A13]">Tuliskan 3-5 kalimat secara alami tanpa terlalu memikirkan bentuk tulisan.</span>
+                    </li>
+                    <li className="flex gap-4">
+                      <span className="font-mono text-[#854C4A] font-bold text-lg shrink-0">03</span>
+                      <span className="text-base font-semibold text-[#221A13]">Pastikan pencahayaan cukup dan foto terlihat jelas saat mengunggah tulisan.</span>
+                    </li>
+                    <li className="flex gap-4">
+                      <span className="font-mono text-[#854C4A] font-bold text-lg shrink-0">04</span>
+                      <span className="text-base font-semibold text-[#221A13]">Tambahkan tanda tanganmu di bagian bawah seperti biasanya.</span>
+                    </li>
+                  </ul>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-16 mb-16">
-                  <div className="text-center">
-                    <div className="bg-green-100 rounded-3xl p-8 shadow-xl">
-                      <img src="https://qph.cf2.quoracdn.net/main-qimg-9566da9f8272b4ba9de140d702d87da8-pjlq" alt="Contoh BAIK: tulisan jelas, pencahayaan merata" className="rounded-2xl shadow-2xl mx-auto max-h-80 object-contain" />
-                    </div>
-                    <p className="mt-8 text-green-700 font-bold text-2xl">✅ Contoh BAIK</p>
-                    <p className="text-lg text-gray-600">Jelas, rata, terang, tanpa bayangan</p>
-                  </div>
-
-                  <div className="text-center">
-                    <div className="bg-red-100 rounded-3xl p-8 shadow-xl">
-                      <img
-                        src="https://media.springernature.com/lw685/springer-static/image/art%3A10.1186%2Fs13640-018-0297-3/MediaObjects/13640_2018_297_Fig3_HTML.png"
-                        alt="Contoh BURUK: buram, miring, gelap"
-                        className="rounded-2xl shadow-2xl mx-auto max-h-80 object-contain"
-                      />
-                    </div>
-                    <p className="mt-8 text-red-700 font-bold text-2xl">❌ Contoh BURUK</p>
-                    <p className="text-lg text-gray-600">Buram, miring, gelap, ada bayangan</p>
-                  </div>
+                {/* Status Laporan */}
+                <div className="rounded-[2rem] border border-[#DBC9C4] bg-white p-8 flex-1">
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#854C4A] font-extrabold mb-3">
+                    Belum Ada Hasil Analisis
+                  </p>
+                  <p className="text-base text-[#221A13] leading-relaxed font-medium">
+                    Insight dan hasil grafologi akan muncul setelah tulisan berhasil dianalisis.
+                  </p>
                 </div>
 
-                <ul className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-                  <li className="flex items-start gap-5 bg-indigo-50 p-6 rounded-2xl">
-                    <Sun className="w-10 h-10 text-yellow-500 flex-shrink-0" />
-                    <div>
-                      <strong className="text-lg">Pencahayaan terang & merata</strong>
-                      <p className="text-gray-600 mt-1">Hindari bayangan atau cahaya langsung dari atas</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-5 bg-indigo-50 p-6 rounded-2xl">
-                    <Ruler className="w-10 h-10 text-indigo-500 flex-shrink-0" />
-                    <div>
-                      <strong className="text-lg">Letakkan kertas rata di meja</strong>
-                      <p className="text-gray-600 mt-1">Foto dari atas tegak lurus, jangan miring</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-5 bg-indigo-50 p-6 rounded-2xl">
-                    <Smartphone className="w-10 h-10 text-green-500 flex-shrink-0" />
-                    <div>
-                      <strong className="text-lg">Tulis 3-5 baris kalimat lengkap</strong>
-                      <p className="text-gray-600 mt-1">Gunakan pulpen hitam/biru, bukan pensil</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-5 bg-indigo-50 p-6 rounded-2xl">
-                    <Camera className="w-10 h-10 text-purple-500 flex-shrink-0" />
-                    <div>
-                      <strong className="text-lg">Pastikan tulisan jelas & tidak terpotong</strong>
-                      <p className="text-gray-600 mt-1">Fokus tajam, tidak buram</p>
-                    </div>
-                  </li>
-                </ul>
               </div>
 
-              {/* Tips Tulis Langsung */}
-              <div className="mt-20 pt-10 border-t-2 border-purple-200">
-                <div className="flex items-center justify-center gap-3 mb-10">
-                  <Lightbulb className="w-9 h-9 text-yellow-500" />
-                  <h3 className="text-3xl font-bold text-indigo-700">Tips Menulis Langsung di Layar (Tablet/HP)</h3>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-16 mb-16 max-w-5xl mx-auto">
-                  <div className="text-center">
-                    <div className="bg-green-100 rounded-3xl p-8 shadow-xl">
-                      <img
-                        src="https://images.pexels.com/photos/33342584/pexels-photo-33342584/free-photo-of-digital-planning-on-tablet-with-stylus-pen.jpeg"
-                        alt="Dengan Stylus: natural & presisi"
-                        className="rounded-2xl shadow-2xl mx-auto max-h-80 object-contain"
-                      />
-                    </div>
-                    <p className="mt-8 text-green-700 font-bold text-2xl">✅ Dengan Stylus (Direkomendasikan)</p>
-                  </div>
-
-                  <div className="text-center">
-                    <div className="bg-blue-100 rounded-3xl p-8 shadow-xl">
-                      <img
-                        src="https://c8.alamy.com/comp/2R41732/digital-signature-on-smartphone-screen-with-woman-hand-a-close-up-of-a-person-writing-on-a-cell-phone-2R41732.jpg"
-                        alt="Dengan Jari: tetap bisa"
-                        className="rounded-2xl shadow-2xl mx-auto max-h-80 object-contain"
-                      />
-                    </div>
-                    <p className="mt-8 text-blue-700 font-bold text-2xl">✅ Dengan Jari</p>
-                  </div>
-                </div>
-
-                <ul className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-                  <li className="flex items-start gap-5 bg-purple-50 p-6 rounded-2xl">
-                    <Pencil className="w-10 h-10 text-purple-600 flex-shrink-0" />
-                    <div>
-                      <strong className="text-lg">Tulis dengan ukuran & tekanan bervariasi</strong>
-                      <p className="text-gray-600 mt-1">Seperti menulis biasa di kertas</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-5 bg-purple-50 p-6 rounded-2xl">
-                    <Ruler className="w-10 h-10 text-indigo-500 flex-shrink-0" />
-                    <div>
-                      <strong className="text-lg">Buat minimal 3-5 baris kalimat lengkap</strong>
-                      <p className="text-gray-600 mt-1">Agar analisis lebih akurat</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-5 bg-purple-50 p-6 rounded-2xl">
-                    <Smartphone className="w-10 h-10 text-green-500 flex-shrink-0" />
-                    <div>
-                      <strong className="text-lg">Gunakan stylus jika ada</strong>
-                      <p className="text-gray-600 mt-1">Hasil lebih natural dan presisi</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-5 bg-purple-50 p-6 rounded-2xl">
-                    <Sun className="w-10 h-10 text-yellow-500 flex-shrink-0" />
-                    <div>
-                      <strong className="text-lg">Pilih ukuran pena yang nyaman</strong>
-                      <p className="text-gray-600 mt-1">Klik ikon pensil untuk mengatur</p>
-                    </div>
-                  </li>
-                </ul>
-              </div>
             </div>
-          )}
-
-          {step === "hasil" && (
-            <div className="animate-fadeIn">
-              <h2 className="text-3xl font-bold text-center mb-10 text-indigo-700">Hasil Analisis Lengkap</h2>
+          ) : (
+            /* ── Tampilan Hasil Analisis ── */
+            <div className="bg-white rounded-[2rem] border border-[#DBC9C4] p-8 md:p-14 shadow-sm max-w-5xl mx-auto">
+              <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#DBC9C4]/40">
+                <h2 className="text-2xl font-bold text-[#854C4A]">Hasil Analisis Lengkap</h2>
+                <button
+                  onClick={() => setStep("upload")}
+                  className="text-sm font-semibold text-[#854C4A] hover:text-[#C17F7C] transition-colors"
+                >
+                  ← Mulai Ulang
+                </button>
+              </div>
               <HasilAnalisis analysis={analysisResult} />
             </div>
           )}
+
+          {/* ── Wawasan Terbaru (Hanya Muncul Saat Upload State) ── */}
+          {step === "upload" && (
+            <div className="space-y-6 pt-8">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-semibold text-[#221A13]">Wawasan Terbaru</h3>
+                <button
+                  onClick={() => router.push("/user/dashboard")}
+                  className="text-sm font-semibold text-[#854C4A] hover:text-[#C17F7C] transition-colors"
+                >
+                  Lihat Riwayat
+                </button>
+              </div>
+              
+              <div className="rounded-[2rem] border-2 border-dashed border-[#DBC9C4] p-12 text-center bg-white">
+                <div className="w-14 h-14 rounded-full bg-[#854C4A]/10 flex items-center justify-center mx-auto mb-4 text-[#854C4A]">
+                  <span className="text-2xl">⏳</span>
+                </div>
+                <p className="font-semibold text-[#221A13]">Belum ada analisis</p>
+                <p className="text-sm text-[#6E5B42] mt-1">
+                  Mulai unggah tulisan tangan pertama Anda untuk melihat wawasan di sini.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Footer ── */}
+          <footer className="mt-20 border-t border-[#DBC9C4]/40 pt-8 flex flex-col md:flex-row items-center justify-between text-sm text-[#6E5B42]">
+            <div>
+              <span className="font-semibold text-[#854C4A]">Grafologi</span> © 2026
+            </div>
+            <div className="flex items-center gap-6 mt-4 md:mt-0">
+              <a href="#" className="hover:text-[#854C4A] transition-colors">Tentang</a>
+              <a href="#" className="hover:text-[#854C4A] transition-colors">Privasi</a>
+              <a href="#" className="hover:text-[#854C4A] transition-colors">Bantuan</a>
+              <a href="#" className="hover:text-[#854C4A] transition-colors">Ketentuan</a>
+            </div>
+          </footer>
+
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.6s ease-out;
-        }
-      `}</style>
-
-      {/* Login Modal */}
-      <LoginRequiredModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-      />
-
-      {/* Analysis Loading Modal */}
-      <LoadingModal isOpen={isLoading} />
     </div>
   );
 }

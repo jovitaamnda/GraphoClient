@@ -267,6 +267,33 @@ class AnalysisService {
     return await Analysis.findByIdAndDelete(analysisId);
   }
 
+  static async updateAnalysis(analysisId, updatedData) {
+    const analysis = await Analysis.findById(analysisId);
+    if (!analysis) return null;
+
+    if (updatedData.enneagramType && updatedData.enneagramType !== analysis.enneagramType) {
+      const knowledge = ENNEAGRAM_KNOWLEDGE_BASE[updatedData.enneagramType];
+      if (knowledge) {
+        analysis.enneagramType = updatedData.enneagramType;
+        analysis.personalityType = knowledge.name;
+        analysis.description = knowledge.desc;
+        analysis.traits = knowledge.features;
+        analysis.recommendations = knowledge.recommendations;
+      }
+    }
+
+    if (updatedData.confidence !== undefined) {
+      analysis.confidence = parseFloat(updatedData.confidence);
+    }
+
+    if (updatedData.personalityType !== undefined) {
+      analysis.personalityType = updatedData.personalityType;
+    }
+
+    await analysis.save();
+    return analysis;
+  }
+
   static async getAllAnalyses(page = 1, limit = 20) {
     const skip = (page - 1) * limit;
     const analyses = await Analysis.find().populate("userId", "name email").sort({ createdAt: -1 }).skip(skip).limit(limit);

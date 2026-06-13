@@ -1,14 +1,12 @@
-import Sidebar from "@/components/admin/Sidebar";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 
 export default function AdminLayout({ children }) {
   return (
-    <div className="flex">
-      <Sidebar />
-      <div className="ml-64 min-h-screen bg-gray-50 w-full relative">
-        <AdminNavbar />
-        <main className="p-10">{children}</main>
-      </div>
+    <div className="min-h-screen bg-[#FFF8F4]">
+      <AdminNavbar />
+      <main className="pt-24 px-8 pb-12">
+        {children}
+      </main>
     </div>
   );
 }

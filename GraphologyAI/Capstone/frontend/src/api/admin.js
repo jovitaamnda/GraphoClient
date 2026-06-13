@@ -24,5 +24,9 @@ export const adminApi = {
 
     deleteAnalysis: async (id) => {
         return client.delete(`/api/analysis/${id}`);
+    },
+
+    updateAnalysis: async (id, data) => {
+        return client.put(`/api/analysis/${id}`, data);
     }
 };

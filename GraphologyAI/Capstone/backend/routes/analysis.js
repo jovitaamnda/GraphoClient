@@ -6,6 +6,7 @@ const { protect, admin } = require("../middleware/authMiddleware");
 // Admin routes - MUST be defined first before :analysisId
 router.get("/admin/analyses", protect, admin, analysisController.getAllAnalyses);
 router.get("/admin/stats", protect, admin, analysisController.getStatistics);
+router.put("/:analysisId", protect, admin, analysisController.updateAnalysis);
 
 // User routes
 router.post("/upload", protect, analysisController.uploadImage);
