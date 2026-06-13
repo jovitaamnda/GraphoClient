@@ -59,6 +59,19 @@ const analysisSchema = new mongoose.Schema(
       default: []
     },
 
+    validationResults: {
+      answers: {
+        type: [Number],
+        default: []
+      },
+      triadScores: {
+        Gut: { type: Number, default: 0 },
+        Heart: { type: Number, default: 0 },
+        Head: { type: Number, default: 0 }
+      },
+      completedAt: Date
+    },
+
     status: {
       type: String,
       enum: ["pending", "completed", "failed"],

@@ -18,5 +18,9 @@ export const analysisApi = {
     getDetail: async (analysisId) => {
         return client.get(`/api/analysis/${analysisId}`);
     },
+
+    saveValidationResult: async (analysisId, payload) => {
+        return client.put(`/api/analysis/${analysisId}/validation`, payload);
+    },
 };
 

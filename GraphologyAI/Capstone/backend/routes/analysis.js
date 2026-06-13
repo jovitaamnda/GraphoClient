@@ -11,6 +11,7 @@ router.put("/:analysisId", protect, admin, analysisController.updateAnalysis);
 // User routes
 router.post("/upload", protect, analysisController.uploadImage);
 router.post("/canvas", protect, analysisController.analyzeCanvas);
+router.put("/:analysisId/validation", protect, analysisController.saveValidationResult);
 router.get("/:analysisId", protect, analysisController.getAnalysis);
 router.get("/:analysisId/pdf", protect, analysisController.generatePDF); // New PDF Route
 router.get("/history/:userId", protect, analysisController.getUserHistory);

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Camera, Upload, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { IMAGE_CONFIG, ERROR_MESSAGES } from "@/config/constants";
 
-export default function UploadFoto({ onUploadComplete }) {
+export default function UploadFoto({ onUploadComplete, onUploadReady }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,6 +65,9 @@ export default function UploadFoto({ onUploadComplete }) {
           const resizedDataUrl = canvas.toDataURL("image/jpeg", IMAGE_CONFIG.quality);
           setFile(resizedDataUrl);
           setPreview(resizedDataUrl);
+          if (uploadedFile?.name && typeof onUploadReady === "function") {
+            onUploadReady(resizedDataUrl, uploadedFile.name);
+          }
           setIsLoading(false);
         } catch (err) {
           setError(ERROR_MESSAGES.imageProcessFailed);
@@ -126,8 +129,8 @@ export default function UploadFoto({ onUploadComplete }) {
           setDragActive(false);
         }}
         onDrop={handleDrop}
-        className={`relative w-full border-2 border-dashed rounded-2xl transition-all duration-300 cursor-pointer flex items-center justify-center p-8 min-h-[360px]
-          ${dragActive ? "border-[#854C4A] bg-[#854C4A]/5" : "border-[#DBC9C4] hover:border-[#854C4A] hover:bg-[#854C4A]/5"}`}
+        className={`relative w-full border border-dashed rounded-[2rem] transition-all duration-300 cursor-pointer flex items-center justify-center p-12 min-h-[360px] bg-white
+          ${dragActive ? "border-[#854C4A] bg-[#FFF7F2]" : "border-[#E7D7D1] hover:border-[#854C4A] hover:bg-[#FFF7F2]"}`}
       >
         <input type="file" accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" disabled={isLoading} />
 
@@ -139,29 +142,29 @@ export default function UploadFoto({ onUploadComplete }) {
             </div>
           ) : preview ? (
             <div className="space-y-4">
-              <div className="relative rounded-2xl overflow-hidden shadow-sm border border-[#DBC9C4] max-h-48 max-w-xs mx-auto">
-                <img src={preview} alt="Preview" className="object-contain max-h-44 bg-gray-50" />
-                <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1 shadow-sm">
+              <div className="relative rounded-[1.75rem] overflow-hidden shadow-sm border border-[#E7D7D1] max-h-52 max-w-xs mx-auto">
+                <img src={preview} alt="Preview" className="object-contain max-h-48 bg-gray-50" />
+                <div className="absolute top-3 right-3 bg-green-500 text-white rounded-[1.25rem] p-2 shadow-sm">
                   <CheckCircle className="w-4 h-4" />
                 </div>
               </div>
               <div>
-                <p className="text-sm text-green-700 font-bold">Siap dianalisis ✓</p>
+                <p className="text-sm text-green-700 font-semibold">Siap dianalisis ✓</p>
                 <p className="text-xs text-[#6E5B42] mt-1">Gunakan tombol di bawah untuk memulai</p>
               </div>
             </div>
           ) : (
-              <div className="space-y-4">
-              <div className="p-4 bg-[#854C4A]/10 rounded-full inline-block text-[#854C4A]">
-                <Upload className="w-10 h-10" />
+              <div className="space-y-6 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[#F8F0EC] border border-[#E7D7D1] text-[#854C4A] shadow-sm">
+                  <Upload className="w-7 h-7" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-semibold text-[#221A13]">Unggah Tulisan Tangan</h2>
+                  <p className="mt-3 text-sm text-[#6E5B42]">
+                    Format yang didukung: JPG, PNG, PDF hingga 10MB
+                  </p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <p className="font-bold text-2xl text-[#221A13]">Unggah Tulisan Tangan</p>
-                <p className="text-base text-[#221A13]/80 font-medium">
-                  Format yang didukung: JPG, PNG, PDF hingga 10MB
-                </p>
-              </div>
-            </div>
           )}
         </div>
       </div>
@@ -172,7 +175,7 @@ export default function UploadFoto({ onUploadComplete }) {
             <input type="file" id="file-btn" accept="image/*" onChange={handleFileChange} className="hidden" disabled={isLoading} />
             <label
               htmlFor="file-btn"
-              className="inline-flex items-center justify-center rounded-xl bg-[#854C4A] px-10 py-4 text-base font-bold text-white shadow-md transition hover:bg-[#6B3A38] active:scale-95 cursor-pointer"
+              className="inline-flex items-center justify-center rounded-[1.75rem] bg-[#854C4A] px-10 py-4 text-base font-bold text-white shadow-md transition hover:bg-[#6B3A38] active:scale-95 cursor-pointer"
             >
               Pilih File
             </label>

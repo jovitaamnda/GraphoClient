@@ -258,6 +258,31 @@ exports.analyzeCanvas = async (req, res) => {
   }
 };
 
+// @route   PUT /api/analysis/:analysisId/validation
+// @desc    Save questionnaire validation results for analysis
+// @access  Private
+exports.saveValidationResult = async (req, res) => {
+  try {
+    const { analysisId } = req.params;
+    const userId = req.user._id;
+    const { answers, triadScores } = req.body;
+
+    if (!answers || !Array.isArray(answers) || answers.length === 0) {
+      return res.status(400).json({ message: "Answers are required" });
+    }
+
+    const saved = await analysisService.saveValidationResult(analysisId, userId, { answers, triadScores });
+    if (!saved) {
+      return res.status(404).json({ message: "Analysis not found or unauthorized" });
+    }
+
+    res.status(200).json({ message: "Validation results saved successfully", analysis: saved });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @route   GET /api/analysis/:analysisId
 // @desc    Get single analysis result
 // @access  Private

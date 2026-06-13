@@ -2,55 +2,90 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import UploadFoto from "@/components/analysis/UploadFoto";
 import HandwritingCanvas from "@/components/analysis/HandwritingCanvas";
 import HasilAnalisis from "@/components/analysis/HasilAnalisis";
 import LoginRequiredModal from "@/components/modals/LoginRequiredModal";
-import LoadingModal from "@/components/modals/LoadingModal";
 import { analysisApi } from "@/api";
 import Swal from 'sweetalert2';
+
+const mockFallbackAnalysis = (imageUrl, fileName) => ({
+  enneagramType: "Tipe 3",
+  personalityType: "Pribadi Ekspresif",
+  description: "Analisis menunjukkan kecenderungan pribadi yang berorientasi pada tujuan, produktif, dan memiliki motivasi tinggi untuk mencapai keberhasilan.\n\nMotivasi Berprestasi: Anda senang menetapkan target dan berusaha mencapainya dengan strategi yang terukur.\n\nAdaptabilitas Tinggi: Anda mampu menyesuaikan diri dengan berbagai situasi dan tetap menjaga performa dalam tekanan.\n\nFokus pada Hasil: Anda lebih memilih tindakan yang efektif dan efisien untuk mencapai tujuan yang telah ditetapkan.",
+  confidence: 84,
+  traits: {
+    slant: { val: "Vertical/Right", meaning: "Motivasi Berprestasi: Anda senang menetapkan target dan bekerja dengan strategi terukur." },
+    size: { val: "Large (Besar)", meaning: "Fokus pada Hasil: Tulisan yang jelas menunjukkan keinginan kuat untuk mencapai tujuan." },
+    pressure: { val: "Heavy (Tebal)", meaning: "Daya Kerja Tinggi: Energi Anda mendukung tindakan yang efektif dan produktif." },
+    baseline: { val: "Ascending (Naik)", meaning: "Adaptabilitas Tinggi: Anda mampu menyesuaikan diri dengan tekanan sambil tetap menjaga performa." },
+  },
+  recommendations: [
+    "Berikan waktu istirahat untuk memperbarui energi Anda.",
+    "Tetap jujur pada diri sendiri tentang motivasi yang mendorong Anda.",
+    "Fokus pada kualitas hasil, bukan hanya kuantitas pencapaian.",
+  ],
+  imageUrl,
+  fileName,
+  fallback: true,
+});
 
 export default function HomeAnalisis() {
   const router = useRouter();
   const [step, setStep] = useState("upload");
   const [inputMode, setInputMode] = useState("upload"); // "upload" atau "canvas"
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [pendingImage, setPendingImage] = useState(null);
+  const [pendingFileName, setPendingFileName] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFallbackResult, setIsFallbackResult] = useState(false);
   const [error, setError] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleUploadComplete = async (imageData) => {
     setIsLoading(true);
     setError(null);
+    setIsFallbackResult(false);
     try {
       // Call API - userId will be extracted from JWT token by backend
       const data = await analysisApi.uploadImage(imageData);
       setAnalysisResult(data.analysis);
+      setPendingImage(null);
+      setPendingFileName(null);
       setStep("hasil");
     } catch (err) {
-      // Custom error message for AI connection issues
-      let displayMessage = err.message;
+      const errorMessage = err.message || String(err);
+      const isAIFailure = /ai service failed|connect|timeout|ECONNREFUSED|ETIMEDOUT/i.test(errorMessage);
 
-      if (
-        err.message.toLowerCase().includes("ai service failed") ||
-        err.message.toLowerCase().includes("connect") ||
-        err.message.toLowerCase().includes("timeout")
-      ) {
-        displayMessage = "Layanan AI tidak terhubung dan terputus.";
-      }
+      if (isAIFailure) {
+        const fallbackAnalysis = mockFallbackAnalysis(pendingImage, pendingFileName);
+        setAnalysisResult(fallbackAnalysis);
+        setIsFallbackResult(true);
+        setStep("hasil");
+        setPendingImage(null);
+        setPendingFileName(null);
+      } else {
+        let displayMessage = errorMessage;
+        if (
+          errorMessage.toLowerCase().includes("ai service failed") ||
+          errorMessage.toLowerCase().includes("connect") ||
+          errorMessage.toLowerCase().includes("timeout")
+        ) {
+          displayMessage = "Layanan AI tidak terhubung dan terputus.";
+        }
 
-      // Show error popup instead of console error
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal Terhubung',
-        text: displayMessage,
-        confirmButtonColor: '#d33',
-        confirmButtonText: 'Tutup'
-      });
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal Terhubung',
+          text: displayMessage,
+          confirmButtonColor: '#d33',
+          confirmButtonText: 'Tutup'
+        });
 
-      // Check if it's an authentication error
-      if (err.message.includes("authorized") || err.message.includes("token")) {
-        setShowLoginModal(true);
+        if (errorMessage.includes("authorized") || errorMessage.includes("token")) {
+          setShowLoginModal(true);
+        }
       }
     } finally {
       setIsLoading(false);
@@ -59,123 +94,143 @@ export default function HomeAnalisis() {
 
   return (
     <div className="min-h-screen bg-[#FFF8F4] text-[#221A13] pt-28 pb-16">
-      <div className="mx-auto max-w-full w-full px-8">
+      <div className="mx-auto max-w-7xl px-8">
         <div className="space-y-12">
-          
-          {/* ── Heading ── */}
-          <div className="max-w-4xl mx-auto text-center space-y-4">
-            <h1 className="text-5xl font-bold tracking-tight text-[#221A13]">
-              Analisis Tulisan Tangan
-            </h1>
-            <p className="text-lg text-[#221A13]/80 leading-relaxed max-w-2xl mx-auto font-medium">
-              Temukan pola karakter dan kepribadianmu melalui tulisan tangan alami yang kamu buat sehari-hari.
-              Unggah sampel tulisan tangan untuk memulai analisis grafologi pertamamu.
-            </p>
+
+          <div className="rounded-[2rem] border border-[#E7D7D1] bg-white p-10 shadow-sm">
+            <div className="max-w-4xl mx-auto text-center space-y-4">
+              <div className="mx-auto inline-flex rounded-xl border border-[#F0E4DD] bg-[#FFF2EA] px-4 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-[#8F5B54]">
+                Analisis Grafologi
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-[#221A13]">
+                Analisis Tulisan Tangan Anda
+              </h1>
+              <p className="mx-auto max-w-3xl text-base md:text-lg leading-relaxed text-[#524342]">
+                Unggah tulisan tangan atau tulis langsung di layar untuk melihat wawasan kepribadian dan fitur grafologi yang diproses oleh AI.
+              </p>
+            </div>
           </div>
 
           {step === "upload" ? (
-            <div className="grid gap-8 xl:grid-cols-[1.55fr_0.95fr]">
-              
-              {/* ── Kotak Input Utama (Sisi Kiri) ── */}
-              <div className="rounded-[2rem] border border-[#DBC9C4] bg-white shadow-sm overflow-hidden flex flex-col">
-                {/* Tabs Selector */}
-                <div className="flex border-b border-[#DBC9C4]/40 bg-[#854C4A]/5">
+            <div className="grid gap-8 xl:grid-cols-[1.7fr_1fr] items-start">
+              <div className="rounded-[2rem] border border-[#E7D7D1] bg-white shadow-sm overflow-hidden">
+                <div className="grid grid-cols-2 gap-3 p-6 pb-4">
                   <button
                     onClick={() => setInputMode("upload")}
-                    className={`flex-1 py-4 text-base font-bold border-b transition-all ${
+                    className={`rounded-[1.75rem] px-5 py-3 text-sm font-semibold transition ${
                       inputMode === "upload"
-                        ? "border-b-2 border-[#854C4A] text-[#854C4A] bg-white"
-                        : "border-transparent text-[#6E5B42] hover:text-[#854C4A]"
+                        ? "bg-[#854C4A] text-white shadow-sm"
+                        : "bg-white text-[#6E5B42] border border-[#E7D7D1] hover:border-[#C9B0A8]"
                     }`}
                   >
                     Unggah Foto
                   </button>
                   <button
                     onClick={() => setInputMode("canvas")}
-                    className={`flex-1 py-4 text-base font-bold border-b transition-all ${
+                    className={`rounded-[1.75rem] px-5 py-3 text-sm font-semibold transition ${
                       inputMode === "canvas"
-                        ? "border-b-2 border-[#854C4A] text-[#854C4A] bg-white"
-                        : "border-transparent text-[#6E5B42] hover:text-[#854C4A]"
+                        ? "bg-[#854C4A] text-white shadow-sm"
+                        : "bg-white text-[#6E5B42] border border-[#E7D7D1] hover:border-[#C9B0A8]"
                     }`}
                   >
-                    Tulis di Layar
+                    Tulis Langsung
                   </button>
                 </div>
 
-                {/* Tab Content */}
-                <div className="p-6 flex-1 flex flex-col">
+                <div className="p-8">
                   {inputMode === "upload" ? (
-                    <UploadFoto onUploadComplete={handleUploadComplete} />
+                    <UploadFoto onUploadComplete={handleUploadComplete} onUploadReady={(preview, fileName) => {
+                      setPendingImage(preview);
+                      setPendingFileName(fileName);
+                    }} />
                   ) : (
                     <HandwritingCanvas onUploadComplete={handleUploadComplete} />
                   )}
                 </div>
               </div>
 
-              {/* ── Sisi Kanan: Panduan & Status ── */}
-              <div className="flex flex-col gap-6">
-                
-                {/* Panduan Penulisan */}
-                <div className="rounded-[2rem] border border-[#DBC9C4] bg-[#F5EDE8] p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="text-2xl">📌</span>
-                    <h3 className="text-2xl font-bold text-[#854C4A] tracking-wide">
-                      Panduan Penulisan
-                    </h3>
+              <div className="space-y-6">
+                <div className="rounded-[2rem] bg-[#F5E5DA] p-8 shadow-sm border border-[#E4D0C5]">
+                  <div className="mb-6 flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F8ECE7] text-[#8B4C45] shadow-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+                        <path d="M12 19V5" />
+                        <path d="M5 12H19" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-semibold text-[#2C1F18]">Panduan Penulisan</h2>
+                      <p className="mt-2 max-w-xs text-sm leading-7 text-[#4D3F38]">Ikuti langkah sederhana ini untuk membuat analisis grafologi Anda lebih akurat.</p>
+                    </div>
                   </div>
-                  <ul className="space-y-5 text-[#221A13] leading-relaxed">
-                    <li className="flex gap-4">
-                      <span className="font-mono text-[#854C4A] font-bold text-lg shrink-0">01</span>
-                      <span className="text-base font-semibold text-[#221A13]">Gunakan kertas putih tanpa garis agar analisis kemiringan tulisan lebih akurat.</span>
-                    </li>
-                    <li className="flex gap-4">
-                      <span className="font-mono text-[#854C4A] font-bold text-lg shrink-0">02</span>
-                      <span className="text-base font-semibold text-[#221A13]">Tuliskan 3-5 kalimat secara alami tanpa terlalu memikirkan bentuk tulisan.</span>
-                    </li>
-                    <li className="flex gap-4">
-                      <span className="font-mono text-[#854C4A] font-bold text-lg shrink-0">03</span>
-                      <span className="text-base font-semibold text-[#221A13]">Pastikan pencahayaan cukup dan foto terlihat jelas saat mengunggah tulisan.</span>
-                    </li>
-                    <li className="flex gap-4">
-                      <span className="font-mono text-[#854C4A] font-bold text-lg shrink-0">04</span>
-                      <span className="text-base font-semibold text-[#221A13]">Tambahkan tanda tanganmu di bagian bawah seperti biasanya.</span>
-                    </li>
-                  </ul>
+                  <div className="space-y-4">
+                    {[
+                      "Gunakan kertas putih tanpa garis agar analisis kemiringan tulisan lebih akurat.",
+                      "Tuliskan 3–5 kalimat secara alami tanpa terlalu memikirkan bentuk tulisan.",
+                      "Pastikan pencahayaan cukup dan foto terlihat jelas saat mengunggah tulisan.",
+                      "Tambahkan tanda tangan di bagian bawah seperti biasanya."
+                    ].map((text, idx) => (
+                      <div key={idx} className="flex items-start gap-4 rounded-[1.5rem] bg-white p-4 shadow-[0_5px_20px_rgba(0,0,0,0.04)]">
+                        <div className="min-w-[40px] text-[#8B4C45] font-semibold text-lg leading-none">0{idx + 1}</div>
+                        <p className="text-sm leading-7 text-[#3F322A]">{text}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Status Laporan */}
-                <div className="rounded-[2rem] border border-[#DBC9C4] bg-white p-8 flex-1">
-                  <p className="text-xs uppercase tracking-[0.3em] text-[#854C4A] font-extrabold mb-3">
-                    Belum Ada Hasil Analisis
-                  </p>
-                  <p className="text-base text-[#221A13] leading-relaxed font-medium">
-                    Insight dan hasil grafologi akan muncul setelah tulisan berhasil dianalisis.
-                  </p>
+                <div className="rounded-[2rem] border border-[#E7D7D1] bg-[#FFF8F4] p-8 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs uppercase tracking-[0.35em] text-[#854C4A] font-semibold">Status Analisis</p>
+                    {isLoading && (
+                      <div className="inline-flex items-center gap-2 rounded-full border border-[#E7D7D1] bg-white px-3 py-2 text-sm text-[#854C4A] shadow-sm">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Sedang Diproses
+                      </div>
+                    )}
+                  </div>
+                  <div className="rounded-[1.5rem] border border-dashed border-[#E7D7D1] bg-white p-6">
+                    {isLoading ? (
+                      <div className="space-y-5">
+                        <div className="rounded-[1.75rem] border border-[#E7D7D1] bg-[#FBF6F3] overflow-hidden shadow-sm">
+                          <div className="h-44 bg-[#EDE2DA] flex items-center justify-center">
+                            {pendingImage ? (
+                              <img src={pendingImage} alt="Preview upload" className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-[#B39A8D]">Loading preview...</div>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-base font-semibold text-[#221A13]">{pendingFileName || 'File sedang diproses'}</p>
+                          <p className="mt-1 text-sm text-[#6E5B42]">Diunggah beberapa saat lalu</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-base font-semibold text-[#221A13]">Belum ada hasil analisis</p>
+                        <p className="mt-2 text-sm text-[#6E5B42] leading-relaxed">
+                          Insight dan hasil grafologi akan muncul setelah tulisan berhasil dianalisis.
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
-
               </div>
-
             </div>
           ) : (
-            /* ── Tampilan Hasil Analisis ── */
-            <div className="bg-white rounded-[2rem] border border-[#DBC9C4] p-8 md:p-14 shadow-sm max-w-5xl mx-auto">
-              <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#DBC9C4]/40">
-                <h2 className="text-2xl font-bold text-[#854C4A]">Hasil Analisis Lengkap</h2>
-                <button
-                  onClick={() => setStep("upload")}
-                  className="text-sm font-semibold text-[#854C4A] hover:text-[#C17F7C] transition-colors"
-                >
-                  ← Mulai Ulang
-                </button>
-              </div>
+            <div className="bg-white rounded-[2rem] border border-[#E7D7D1] p-8 md:p-14 shadow-sm max-w-5xl mx-auto">
+              {isFallbackResult && (
+                <div className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
+                  Hasil sementara ditampilkan karena AI service saat ini sedang tidak dapat dijangkau. Hasil asli akan muncul kembali setelah backend AI pulih.
+                </div>
+              )}
               <HasilAnalisis analysis={analysisResult} />
             </div>
           )}
 
-          {/* ── Wawasan Terbaru (Hanya Muncul Saat Upload State) ── */}
           {step === "upload" && (
             <div className="space-y-6 pt-8">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <h3 className="text-2xl font-semibold text-[#221A13]">Wawasan Terbaru</h3>
                 <button
                   onClick={() => router.push("/user/dashboard")}
@@ -184,15 +239,19 @@ export default function HomeAnalisis() {
                   Lihat Riwayat
                 </button>
               </div>
-              
-              <div className="rounded-[2rem] border-2 border-dashed border-[#DBC9C4] p-12 text-center bg-white">
-                <div className="w-14 h-14 rounded-full bg-[#854C4A]/10 flex items-center justify-center mx-auto mb-4 text-[#854C4A]">
-                  <span className="text-2xl">⏳</span>
+              <div className="rounded-[2rem] border border-dashed border-[#E7D7D1] bg-[#FFF3EE] p-12 shadow-none">
+                <div className="mx-auto flex max-w-3xl flex-col items-center justify-center gap-5 text-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-[1.75rem] bg-white border border-[#E7D7D1] shadow-sm text-[#8F6F63]">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8">
+                      <circle cx="12" cy="12" r="9" />
+                      <polyline points="12 7 12 12 15.5 14.5" />
+                    </svg>
+                  </div>
+                  <p className="text-lg font-semibold text-[#221A13]">Belum ada analisis</p>
+                  <p className="max-w-xl text-sm text-[#6E5B42] leading-relaxed">
+                    Mulai unggah tulisan tangan pertama Anda untuk melihat wawasan di sini.
+                  </p>
                 </div>
-                <p className="font-semibold text-[#221A13]">Belum ada analisis</p>
-                <p className="text-sm text-[#6E5B42] mt-1">
-                  Mulai unggah tulisan tangan pertama Anda untuk melihat wawasan di sini.
-                </p>
               </div>
             </div>
           )}
@@ -212,6 +271,8 @@ export default function HomeAnalisis() {
 
         </div>
       </div>
+
+      <LoginRequiredModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </div>
   );
 }

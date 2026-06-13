@@ -35,31 +35,30 @@ export default function HandwritingCanvas({ onUploadComplete }) {
   // --- 1. SETUP CANVAS & SCROLL LOCK ---
   useEffect(() => {
     const canvas = canvasRef.current;
-    
-    // Setup Resolusi Tinggi
-    const updateCanvasSize = () => {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      
-      canvas.style.width = `${rect.width}px`;
-      canvas.style.height = `${rect.height}px`;
+    const container = canvas.parentElement;
 
+    const createContext = (width, height) => {
       const ctx = canvas.getContext("2d");
-      ctx.scale(dpr, dpr);
-      
+      ctx.resetTransform();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.strokeStyle = "#000000";
       ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, rect.width, rect.height);
-      
+      ctx.fillRect(0, 0, width, height);
       ctxRef.current = ctx;
-      
-      // Draw guidelines
-      drawGuidelines(ctx, rect.width, rect.height);
+      drawGuidelines(ctx, width, height);
+    };
+
+    const updateCanvasSize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      createContext(rect.width, rect.height);
     };
 
     updateCanvasSize();
@@ -73,17 +72,12 @@ export default function HandwritingCanvas({ onUploadComplete }) {
     };
 
     const handlePointerDown = (e) => {
-      document.body.style.overflow = "hidden"; 
-      document.body.style.touchAction = "none";
-      
+      if (e.pointerType === "mouse" && e.button !== 0) return;
       e.preventDefault();
       e.stopPropagation();
-      
       canvas.setPointerCapture(e.pointerId);
-      
       isDrawingRef.current = true;
       setHasContent(true);
-
       const { x, y } = getPos(e);
       const context = ctxRef.current;
       context.beginPath();
@@ -92,10 +86,8 @@ export default function HandwritingCanvas({ onUploadComplete }) {
 
     const handlePointerMove = (e) => {
       if (!isDrawingRef.current) return;
-      
       e.preventDefault();
       e.stopPropagation();
-
       const { x, y } = getPos(e);
       const context = ctxRef.current;
       context.lineTo(x, y);
@@ -103,15 +95,18 @@ export default function HandwritingCanvas({ onUploadComplete }) {
     };
 
     const handlePointerUp = (e) => {
+      if (!isDrawingRef.current) return;
       isDrawingRef.current = false;
       const context = ctxRef.current;
       if (context) context.closePath();
-      
-      document.body.style.overflow = ""; 
-      document.body.style.touchAction = "";
-      
       if (e.pointerId) canvas.releasePointerCapture(e.pointerId);
     };
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateCanvasSize();
+    });
+
+    resizeObserver.observe(container);
 
     canvas.addEventListener("pointerdown", handlePointerDown, { passive: false });
     canvas.addEventListener("pointermove", handlePointerMove, { passive: false });
@@ -119,15 +114,13 @@ export default function HandwritingCanvas({ onUploadComplete }) {
     canvas.addEventListener("pointercancel", handlePointerUp, { passive: false });
 
     return () => {
+      resizeObserver.disconnect();
       canvas.removeEventListener("pointerdown", handlePointerDown);
       canvas.removeEventListener("pointermove", handlePointerMove);
       canvas.removeEventListener("pointerup", handlePointerUp);
       canvas.removeEventListener("pointercancel", handlePointerUp);
-      
-      document.body.style.overflow = "";
-      document.body.style.touchAction = "";
     };
-  }, []); 
+  }, []);
 
   // --- 2. UPDATE STYLE SAAT TOOL GANTI ---
   useEffect(() => {
