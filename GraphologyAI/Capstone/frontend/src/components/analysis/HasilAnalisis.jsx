@@ -187,7 +187,12 @@ GRAPHOLOGY FEATURES
                   <button
                     onClick={() => {
                       const id = rawData._id || rawData.id;
-                      router.push(id ? `/user/analysis/validation?analysisId=${id}` : '/user/analysis/validation');
+                      if (id) {
+                         router.push(`/user/analysis/validation?analysisId=${id}`);
+                      } else {
+                         const typeParam = rawData.enneagramType || 'Tipe 3';
+                         router.push(`/user/analysis/validation?testType=${typeParam}`);
+                      }
                     }}
                     className="mt-8 rounded-2xl bg-white px-7 py-3 text-sm font-semibold text-[#7A4640] shadow-sm transition hover:opacity-90"
                   >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import UploadFoto from "@/components/analysis/UploadFoto";
@@ -9,6 +9,7 @@ import HasilAnalisis from "@/components/analysis/HasilAnalisis";
 import LoginRequiredModal from "@/components/modals/LoginRequiredModal";
 import { analysisApi } from "@/api";
 import Swal from 'sweetalert2';
+import { useAuth } from "@/context/AuthContext";
 
 const mockFallbackAnalysis = (imageUrl, fileName) => ({
   enneagramType: "Tipe 3",
@@ -42,6 +43,27 @@ export default function HomeAnalisis() {
   const [isFallbackResult, setIsFallbackResult] = useState(false);
   const [error, setError] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const [history, setHistory] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user && user._id) {
+      const fetchHistory = async () => {
+        setIsLoadingHistory(true);
+        try {
+          const res = await analysisApi.getHistory(user._id, 1, 3);
+          setHistory(res.analyses || []);
+        } catch (err) {
+          console.error("Gagal mengambil riwayat", err);
+        } finally {
+          setIsLoadingHistory(false);
+        }
+      };
+      fetchHistory();
+    }
+  }, [user]);
 
   const handleUploadComplete = async (imageData) => {
     setIsLoading(true);
@@ -239,20 +261,43 @@ export default function HomeAnalisis() {
                   Lihat Riwayat
                 </button>
               </div>
-              <div className="rounded-[2rem] border border-dashed border-[#E7D7D1] bg-[#FFF3EE] p-12 shadow-none">
-                <div className="mx-auto flex max-w-3xl flex-col items-center justify-center gap-5 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-[1.75rem] bg-white border border-[#E7D7D1] shadow-sm text-[#8F6F63]">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8">
-                      <circle cx="12" cy="12" r="9" />
-                      <polyline points="12 7 12 12 15.5 14.5" />
-                    </svg>
-                  </div>
-                  <p className="text-lg font-semibold text-[#221A13]">Belum ada analisis</p>
-                  <p className="max-w-xl text-sm text-[#6E5B42] leading-relaxed">
-                    Mulai unggah tulisan tangan pertama Anda untuk melihat wawasan di sini.
-                  </p>
+              
+              {isLoadingHistory ? (
+                <div className="rounded-[2rem] border border-dashed border-[#E7D7D1] bg-[#FFF3EE] p-12 flex justify-center items-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#854C4A]" />
                 </div>
-              </div>
+              ) : history.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-3">
+                  {history.map((item) => (
+                    <div key={item._id} className="rounded-[1.5rem] border border-[#E7D7D1] bg-white p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
+                        setAnalysisResult(item);
+                        setStep("hasil");
+                    }}>
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-xs font-semibold text-[#854C4A] uppercase tracking-wider">{new Date(item.createdAt).toLocaleDateString('id-ID')}</span>
+                        <span className="px-3 py-1 bg-[#F5E5DA] text-[#854C4A] rounded-full text-xs font-medium">{item.confidence}%</span>
+                      </div>
+                      <h4 className="text-lg font-bold text-[#221A13] mb-2">{item.enneagramType}</h4>
+                      <p className="text-sm text-[#6E5B42] line-clamp-2">{item.personalityType}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-[2rem] border border-dashed border-[#E7D7D1] bg-[#FFF3EE] p-12 shadow-none">
+                  <div className="mx-auto flex max-w-3xl flex-col items-center justify-center gap-5 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-[1.75rem] bg-white border border-[#E7D7D1] shadow-sm text-[#8F6F63]">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8">
+                        <circle cx="12" cy="12" r="9" />
+                        <polyline points="12 7 12 12 15.5 14.5" />
+                      </svg>
+                    </div>
+                    <p className="text-lg font-semibold text-[#221A13]">Belum ada analisis</p>
+                    <p className="max-w-xl text-sm text-[#6E5B42] leading-relaxed">
+                      Mulai unggah tulisan tangan pertama Anda untuk melihat wawasan di sini.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
